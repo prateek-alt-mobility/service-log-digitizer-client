@@ -21,7 +21,35 @@ type LoginResponse = BaseResponse<{
   refresh_token: string;
 }>;
 
+type UserDetailsResponse = BaseResponse<{
+  userId: string;
+  sessionId: string;
+  phoneNo: string;
+  designation: string;
+  profile: string;
+  email: string;
+  roles: string[];
+  id: string;
+  accessType: number;
+  userIp: string;
+  sessionInfo: {
+    deviceInfo: string;
+    lastActive: string;
+    ip: string;
+    sessionId: string;
+  };
+  name: string;
+  dateOfBirth: string;
+  referral: string;
+  isEligible: boolean;
+  gender: string;
+  userName: string;
+  userStatus: string;
+  mPinSetup: boolean;
+}>;
+
 enum AUTH_API_ENDPOINTS {
+  GET_USER_DETAILS = '/auth/me',
   LOGIN = '/auth/login',
 }
 
@@ -34,7 +62,12 @@ const loginApi = api.injectEndpoints({
         body,
       }),
     }),
+    getUserDetails: builder.query<UserDetailsResponse, void>({
+      query: () => ({
+        url: AUTH_API_ENDPOINTS.GET_USER_DETAILS,
+      }),
+    }),
   }),
 });
 
-export const { useLoginMutation } = loginApi;
+export const { useLoginMutation, useGetUserDetailsQuery } = loginApi;
