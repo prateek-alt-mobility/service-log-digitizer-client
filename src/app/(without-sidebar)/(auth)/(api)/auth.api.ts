@@ -2,12 +2,23 @@ import { BaseResponse } from '@/types';
 import api from '@store/api';
 
 type LoginRequest = {
-  email: string;
+  username: string;
   password: string;
 };
 
 type LoginResponse = BaseResponse<{
-  token: string;
+  designation: string;
+  email: string;
+  id: string;
+  mPinSetup: boolean;
+  name: string;
+  phoneNo: string;
+  profile: string;
+  roles: string[];
+  sessionId: string;
+  userStatus: string;
+  access_token: string;
+  refresh_token: string;
 }>;
 
 enum AUTH_API_ENDPOINTS {

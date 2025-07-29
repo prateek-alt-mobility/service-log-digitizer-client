@@ -104,10 +104,10 @@
 
   --popover: oklch(0.2 0.03 240);
   --popover-foreground: oklch(0.95 0.02 240);
-
   /* Darker primary blue for dark mode */
   --primary: oklch(0.45 0.22 240);
-  --primary-foreground: oklch(0.15 0.02 240);
+  /* --primary-foreground: oklch(0.15 0.02 240); */
+  --primary-foreground: oklch(0.98 0.005 240);
 
   --secondary: oklch(0.25 0.05 240);
   --secondary-foreground: oklch(0.9 0.03 240);
@@ -136,7 +136,8 @@
   --sidebar: oklch(0.2 0.03 240);
   --sidebar-foreground: oklch(0.95 0.02 240);
   --sidebar-primary: oklch(0.45 0.22 240);
-  --sidebar-primary-foreground: oklch(0.15 0.02 240);
+  /* --sidebar-primary-foreground: oklch(0.15 0.02 240); */
+  --sidebar-primary-foreground: oklch(0.98 0.005 240);
   --sidebar-accent: oklch(0.35 0.1 240);
   --sidebar-accent-foreground: oklch(0.9 0.03 240);
   --sidebar-border: oklch(0.3 0.05 240 / 0.2);
