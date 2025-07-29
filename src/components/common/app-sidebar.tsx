@@ -18,7 +18,7 @@ import {
 const data = [
   {
     title: 'Dashboard',
-    url: '',
+    url: '/',
     icon: PieChart,
   },
   {
