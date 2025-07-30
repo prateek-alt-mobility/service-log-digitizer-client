@@ -74,13 +74,7 @@ export default function ProfilePage() {
   };
 
   // Get initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase();
-  };
+  const getInitials = (name: string) => name.slice(0, 2).toUpperCase();
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)]">

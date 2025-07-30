@@ -29,14 +29,7 @@ export function NavUser() {
   if (!user) return null;
 
   // Get initials for avatar fallback
-  const getInitials = (email: string) => {
-    return email
-      .split('@')[0]
-      .split('.')
-      .map((part) => part[0])
-      .join('')
-      .toUpperCase();
-  };
+  const getInitials = (name: string) => name?.slice(0, 2).toUpperCase() || '';
 
   return (
     <SidebarMenu>
@@ -49,7 +42,7 @@ export function NavUser() {
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.profile} className="object-cover" />
-                <AvatarFallback className="rounded-lg">{getInitials(user.email)}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
