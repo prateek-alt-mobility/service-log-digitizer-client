@@ -74,6 +74,7 @@ export default function LoginPage() {
         });
       }
     } catch (err) {
+      console.log(err);
       toast.error('Login failed', {
         description: 'An error occurred. Please try again later.',
       });

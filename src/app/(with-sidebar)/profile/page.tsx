@@ -15,9 +15,7 @@ import {
   Globe,
   Laptop,
   Clock,
-  Gift,
   UserCircle2,
-  Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,11 +24,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/hooks/use-auth';
 
 export default function ProfilePage() {
   const { data: userDetails, isLoading, error } = useGetUserDetailsQuery();
-  const { user } = useAuth();
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {

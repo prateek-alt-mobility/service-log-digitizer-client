@@ -2,14 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
-  id: string;
+  designation: string;
   email: string;
-  phoneNo: string;
-  userStatus: string;
+  id: string;
   mPinSetup: boolean;
+  name: string;
+  phoneNo: string;
+  profile: string;
   roles: string[];
   sessionId: string;
-  [key: string]: any; // For any additional user properties
+  userStatus: string;
 }
 
 interface AuthState {

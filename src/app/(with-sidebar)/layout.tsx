@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { AppSidebar } from '@/components/common/app-sidebar';
 import { Navbar } from '@/components/common/navbar';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { useAuth } from '@/hooks/use-auth';
 
 const WithSidebarLayout = ({ children }: { children: React.ReactNode }) => {
