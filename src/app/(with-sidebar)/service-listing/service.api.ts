@@ -1,0 +1,115 @@
+import api from '@/store/api';
+import { BaseResponse } from '@/types';
+
+// Types for the API response
+interface InvoiceData {
+  fileUrl: string;
+  s3Key: string;
+  fileName: string;
+  originalName: string;
+  processingStatus: string;
+  rawText: string;
+  aiConfidence: number;
+  processingError?: string;
+  uploadedAt: string;
+  processingMetrics: {
+    _id: string;
+  };
+}
+
+interface ExtractedData {
+  invoiceNumber: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: string;
+  vehicleInfo: {
+    _id: string;
+  };
+  costs: {
+    _id: string;
+  };
+  warranty: {
+    _id: string;
+  };
+  services: any[];
+  parts: any[];
+}
+
+export interface ServiceItem {
+  _id: string;
+  createdBy: string;
+  userId: string;
+  serviceNo: string;
+  refNo: string;
+  regNo: string;
+  serviceType: string;
+  status: string;
+  priority: string;
+  description: string;
+  invoice: InvoiceData;
+  extractedData: ExtractedData;
+  userEditedData: any;
+  isDataVerified: boolean;
+  requiresManualReview: boolean;
+  additionalAttachments: any[];
+  createdParts: any[];
+  totalCost: number;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: string;
+  __v: number;
+}
+
+type ServicesResponse = BaseResponse<{
+  data: ServiceItem[];
+  meta_data: {
+    search_query: string;
+    page: number;
+    page_size: number;
+    count: number;
+  };
+}>;
+
+// Search parameters interface
+export interface ServiceSearchParams {
+  search?: string;
+  vehicleId?: string;
+  status?: string;
+  serviceType?: string;
+}
+
+enum SERVICE_API_ENDPOINTS {
+  GET_SERVICES = '/services',
+}
+
+const serviceApi = api.injectEndpoints({
+  endpoints: (builder) => ({
+    getServices: builder.query<ServicesResponse, ServiceSearchParams | void>({
+      query: (params) => {
+        if (!params) {
+          return SERVICE_API_ENDPOINTS.GET_SERVICES;
+        }
+        
+        const searchParams = new URLSearchParams();
+        
+        if (params.search) {
+          searchParams.append('search', params.search);
+        }
+        if (params.vehicleId) {
+          searchParams.append('vehicleId', params.vehicleId);
+        }
+        if (params.status) {
+          searchParams.append('status', params.status);
+        }
+        if (params.serviceType) {
+          searchParams.append('serviceType', params.serviceType);
+        }
+        
+        const queryString = searchParams.toString();
+        return queryString ? `${SERVICE_API_ENDPOINTS.GET_SERVICES}?${queryString}` : SERVICE_API_ENDPOINTS.GET_SERVICES;
+      },
+    }),
+  }),
+});
+
+export const { useGetServicesQuery } = serviceApi; 
