@@ -156,7 +156,8 @@ enum INVOICE_API_ENDPOINTS {
   UPLOAD_FILE = '/files/pdf-upload',
   CREATE_SERVICE = '/services/upload',
   TRIGGER_AI_PARSING = '/services/:id/process',
-  SUBMIT_SERVICE = 'services/{id}/submit',
+  SUBMIT_SERVICE = 'services/:id/submit',
+  UPDATE_SERVICE = 'services/:id/edit',
 }
 export const addInvoiceApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -184,14 +185,23 @@ export const addInvoiceApi = api.injectEndpoints({
         method: 'POST',
       }),
     }),
-    submitService: builder.mutation<
+    submitService: builder.mutation<SubmitServiceResponse, { id: string; isDataVerified: boolean }>(
+      {
+        query: (payload) => ({
+          url: INVOICE_API_ENDPOINTS.SUBMIT_SERVICE.replace(':id', payload.id),
+          method: 'POST',
+          body: { isDataVerified: payload.isDataVerified },
+        }),
+      },
+    ),
+    updateService: builder.mutation<
       SubmitServiceResponse,
-      { id: string; data: SubmitServicePayload }
+      { id: string; payload: SubmitServicePayload }
     >({
-      query: ({ id, data }) => ({
-        url: INVOICE_API_ENDPOINTS.SUBMIT_SERVICE.replace('{id}', id),
-        method: 'POST',
-        body: data,
+      query: ({ id, payload }) => ({
+        url: INVOICE_API_ENDPOINTS.UPDATE_SERVICE.replace(':id', id),
+        method: 'PATCH',
+        body: payload,
       }),
     }),
   }),
@@ -203,4 +213,5 @@ export const {
   useCreateServiceMutation,
   useTriggerAIParsingMutation,
   useSubmitServiceMutation,
+  useUpdateServiceMutation,
 } = addInvoiceApi;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,10 @@ import { toast } from 'sonner';
 import { Check, Edit3 } from 'lucide-react';
 import {
   useSubmitServiceMutation,
+  useUpdateServiceMutation,
   type ExtractedData as ApiExtractedData,
 } from '../add-invoice.api';
+import { useRouter } from 'next/navigation';
 
 interface VehicleInfo {
   vin: string | null;
@@ -88,8 +90,91 @@ export function AIProcessingReview({
   const [data, setData] = useState<ExtractedData>(extractedData);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [updateService] = useUpdateServiceMutation();
   const [submitService] = useSubmitServiceMutation();
+  const router = useRouter();
+  // Form state variables
+  const [serviceDate, setServiceDate] = useState(extractedData.serviceDate || '');
+  const [invoiceNumber, setInvoiceNumber] = useState(extractedData.invoiceNumber || '');
+  const [shopName, setShopName] = useState(extractedData.shopName || '');
+  const [shopAddress, setShopAddress] = useState(extractedData.shopAddress || '');
+  const [shopPhone, setShopPhone] = useState(extractedData.shopPhone || '');
+
+  // Vehicle info state variables
+  const [registrationNumber, setRegistrationNumber] = useState(
+    extractedData.vehicleInfo?.registrationNumber || '',
+  );
+  const [vin, setVin] = useState(extractedData.vehicleInfo?.vin || '');
+  const [make, setMake] = useState(extractedData.vehicleInfo?.make || '');
+  const [model, setModel] = useState(extractedData.vehicleInfo?.model || '');
+  const [year, setYear] = useState<number>(extractedData.vehicleInfo?.year || 0);
+  const [mileage, setMileage] = useState(extractedData.vehicleInfo?.mileage || '');
+
+  // Costs state variables
+  const [subtotal, setSubtotal] = useState(extractedData.costs?.subtotal || 0);
+  const [laborCost, setLaborCost] = useState(extractedData.costs?.laborCost || 0);
+  const [partsCost, setPartsCost] = useState(extractedData.costs?.partsCost || 0);
+  const [taxAmount, setTaxAmount] = useState(extractedData.costs?.taxAmount || '');
+  const [totalCost, setTotalCost] = useState(extractedData.costs?.totalCost || 0);
+
+  // Services and parts arrays
+  const [services, setServices] = useState(extractedData.services || []);
+  const [parts, setParts] = useState(extractedData.parts || []);
+
+  // Update data state when form fields change
+  useEffect(() => {
+    setData((prevData) => ({
+      ...prevData,
+      serviceDate,
+      invoiceNumber,
+      shopName,
+      shopAddress,
+      shopPhone,
+      vehicleInfo: {
+        ...prevData.vehicleInfo,
+        registrationNumber,
+        vin,
+        make,
+        model,
+        year, // year is now always a number
+        mileage: typeof mileage === 'string' ? parseInt(mileage) || null : mileage,
+      },
+      costs: {
+        ...prevData.costs,
+        subtotal,
+        laborCost,
+        partsCost,
+        taxAmount:
+          taxAmount === ''
+            ? null
+            : typeof taxAmount === 'string'
+              ? parseFloat(taxAmount) || null
+              : taxAmount,
+        totalCost,
+      },
+      services,
+      parts,
+    }));
+  }, [
+    serviceDate,
+    invoiceNumber,
+    shopName,
+    shopAddress,
+    shopPhone,
+    registrationNumber,
+    vin,
+    make,
+    model,
+    year,
+    mileage,
+    subtotal,
+    laborCost,
+    partsCost,
+    taxAmount,
+    totalCost,
+    services,
+    parts,
+  ]);
 
   const handleFieldChange = (path: string, value: any) => {
     setData((prev) => {
@@ -104,6 +189,58 @@ export function AIProcessingReview({
       current[keys[keys.length - 1]] = value;
       return newData;
     });
+
+    // Also update the corresponding state variable
+    switch (path) {
+      case 'serviceDate':
+        setServiceDate(value);
+        break;
+      case 'invoiceNumber':
+        setInvoiceNumber(value);
+        break;
+      case 'shopName':
+        setShopName(value);
+        break;
+      case 'shopAddress':
+        setShopAddress(value);
+        break;
+      case 'shopPhone':
+        setShopPhone(value);
+        break;
+      case 'vehicleInfo.registrationNumber':
+        setRegistrationNumber(value);
+        break;
+      case 'vehicleInfo.vin':
+        setVin(value);
+        break;
+      case 'vehicleInfo.make':
+        setMake(value);
+        break;
+      case 'vehicleInfo.model':
+        setModel(value);
+        break;
+      case 'vehicleInfo.year':
+        setYear(typeof value === 'number' ? value : 0);
+        break;
+      case 'vehicleInfo.mileage':
+        setMileage(value);
+        break;
+      case 'costs.subtotal':
+        setSubtotal(value);
+        break;
+      case 'costs.laborCost':
+        setLaborCost(value);
+        break;
+      case 'costs.partsCost':
+        setPartsCost(value);
+        break;
+      case 'costs.taxAmount':
+        setTaxAmount(value);
+        break;
+      case 'costs.totalCost':
+        setTotalCost(value);
+        break;
+    }
   };
 
   const transformDataForApi = (localData: ExtractedData): ApiExtractedData => {
@@ -123,7 +260,8 @@ export function AIProcessingReview({
         mileage: localData.vehicleInfo.mileage || 0,
       },
       services: localData.services.map((service) => ({
-        type: service.type,
+        type: 'MAINTENANCE',
+        //service.type,
         description: service.description,
         cost: service.cost,
         laborHours: service.laborHours || 0,
@@ -134,7 +272,6 @@ export function AIProcessingReview({
         quantity: part.quantity,
         unitCost: part.unitCost,
         totalCost: part.totalCost,
-        catalogMatch: {},
         matchConfidence: 0,
       })),
       costs: {
@@ -152,24 +289,51 @@ export function AIProcessingReview({
     };
   };
 
-  const handleApproved = async () => {
+  const handleEdit = async () => {
     try {
       setIsSubmitting(true);
 
       const submitPayload = {
         refNo,
         regNo,
-        serviceType,
-        priority,
-        description,
+        serviceType: serviceType || 'OTHER',
+        priority: priority || 'NORMAL',
+        description: description || '',
         extractedData: transformDataForApi(data),
         additionalAttachments: pdfUrl ? [pdfUrl] : [],
         serviceDate: data.serviceDate,
         totalCost: data.costs.totalCost,
         isDataVerified: true,
       };
+      console.log(submitPayload);
 
-      await submitService({ id: serviceId, data: submitPayload }).unwrap();
+      await updateService({ id: serviceId, payload: submitPayload }).unwrap();
+      setIsEditing(false);
+      setIsSubmitting(false);
+      await submitService({ id: serviceId, isDataVerified: true }).unwrap();
+      toast.success('Service submitted successfully');
+
+      if (onApproved) {
+        onApproved(data);
+      }
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error('Error submitting service:', error);
+      toast.error('Failed to submit service');
+    } finally {
+      setIsSubmitting(false);
+      router.push('/');
+    }
+  };
+
+  const handleApproval = async () => {
+    try {
+      setIsSubmitting(true);
+
+      await submitService({ id: serviceId, isDataVerified: true }).unwrap();
 
       toast.success('Service submitted successfully');
 
@@ -185,6 +349,7 @@ export function AIProcessingReview({
       toast.error('Failed to submit service');
     } finally {
       setIsSubmitting(false);
+      router.push('/');
     }
   };
 
@@ -234,8 +399,11 @@ export function AIProcessingReview({
                 <Input
                   id="serviceDate"
                   type="date"
-                  value={data.serviceDate}
-                  onChange={(e) => handleFieldChange('serviceDate', e.target.value)}
+                  value={serviceDate}
+                  onChange={(e) => {
+                    setServiceDate(e.target.value);
+                    handleFieldChange('serviceDate', e.target.value);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -244,8 +412,11 @@ export function AIProcessingReview({
                 <Label htmlFor="invoiceNumber">Invoice Number</Label>
                 <Input
                   id="invoiceNumber"
-                  value={data.invoiceNumber}
-                  onChange={(e) => handleFieldChange('invoiceNumber', e.target.value)}
+                  value={invoiceNumber}
+                  onChange={(e) => {
+                    setInvoiceNumber(e.target.value);
+                    handleFieldChange('invoiceNumber', e.target.value);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -255,8 +426,11 @@ export function AIProcessingReview({
               <Label htmlFor="shopName">Shop Name</Label>
               <Input
                 id="shopName"
-                value={data.shopName}
-                onChange={(e) => handleFieldChange('shopName', e.target.value)}
+                value={shopName}
+                onChange={(e) => {
+                  setShopName(e.target.value);
+                  handleFieldChange('shopName', e.target.value);
+                }}
                 disabled={!isEditing}
               />
             </div>
@@ -265,8 +439,11 @@ export function AIProcessingReview({
               <Label htmlFor="shopAddress">Shop Address</Label>
               <Textarea
                 id="shopAddress"
-                value={data.shopAddress}
-                onChange={(e) => handleFieldChange('shopAddress', e.target.value)}
+                value={shopAddress}
+                onChange={(e) => {
+                  setShopAddress(e.target.value);
+                  handleFieldChange('shopAddress', e.target.value);
+                }}
                 disabled={!isEditing}
                 rows={2}
               />
@@ -276,8 +453,11 @@ export function AIProcessingReview({
               <Label htmlFor="shopPhone">Shop Phone</Label>
               <Input
                 id="shopPhone"
-                value={data.shopPhone || ''}
-                onChange={(e) => handleFieldChange('shopPhone', e.target.value)}
+                value={shopPhone}
+                onChange={(e) => {
+                  setShopPhone(e.target.value);
+                  handleFieldChange('shopPhone', e.target.value);
+                }}
                 disabled={!isEditing}
                 placeholder="Phone number"
               />
@@ -293,10 +473,11 @@ export function AIProcessingReview({
                 <Label htmlFor="registrationNumber">Registration Number</Label>
                 <Input
                   id="registrationNumber"
-                  value={data.vehicleInfo.registrationNumber}
-                  onChange={(e) =>
-                    handleFieldChange('vehicleInfo.registrationNumber', e.target.value)
-                  }
+                  value={registrationNumber}
+                  onChange={(e) => {
+                    setRegistrationNumber(e.target.value);
+                    handleFieldChange('vehicleInfo.registrationNumber', e.target.value);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -305,8 +486,11 @@ export function AIProcessingReview({
                 <Label htmlFor="vin">VIN</Label>
                 <Input
                   id="vin"
-                  value={data.vehicleInfo.vin || ''}
-                  onChange={(e) => handleFieldChange('vehicleInfo.vin', e.target.value)}
+                  value={vin}
+                  onChange={(e) => {
+                    setVin(e.target.value);
+                    handleFieldChange('vehicleInfo.vin', e.target.value);
+                  }}
                   disabled={!isEditing}
                   placeholder="VIN number"
                 />
@@ -318,8 +502,11 @@ export function AIProcessingReview({
                 <Label htmlFor="make">Make</Label>
                 <Input
                   id="make"
-                  value={data.vehicleInfo.make}
-                  onChange={(e) => handleFieldChange('vehicleInfo.make', e.target.value)}
+                  value={make}
+                  onChange={(e) => {
+                    setMake(e.target.value);
+                    handleFieldChange('vehicleInfo.make', e.target.value);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -328,8 +515,11 @@ export function AIProcessingReview({
                 <Label htmlFor="model">Model</Label>
                 <Input
                   id="model"
-                  value={data.vehicleInfo.model}
-                  onChange={(e) => handleFieldChange('vehicleInfo.model', e.target.value)}
+                  value={model}
+                  onChange={(e) => {
+                    setModel(e.target.value);
+                    handleFieldChange('vehicleInfo.model', e.target.value);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -339,8 +529,12 @@ export function AIProcessingReview({
                 <Input
                   id="year"
                   type="number"
-                  value={data.vehicleInfo.year}
-                  onChange={(e) => handleFieldChange('vehicleInfo.year', parseInt(e.target.value))}
+                  value={year}
+                  onChange={(e) => {
+                    const parsedYear = parseInt(e.target.value) || 0;
+                    setYear(parsedYear);
+                    handleFieldChange('vehicleInfo.year', parsedYear);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -351,13 +545,14 @@ export function AIProcessingReview({
               <Input
                 id="mileage"
                 type="number"
-                value={data.vehicleInfo.mileage || ''}
-                onChange={(e) =>
+                value={mileage}
+                onChange={(e) => {
+                  setMileage(e.target.value);
                   handleFieldChange(
                     'vehicleInfo.mileage',
                     e.target.value ? parseInt(e.target.value) : null,
-                  )
-                }
+                  );
+                }}
                 disabled={!isEditing}
                 placeholder="Mileage"
               />
@@ -367,18 +562,18 @@ export function AIProcessingReview({
           {/* Services */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Services</h3>
-            {data.services.map((service, index) => (
+            {services.map((service, index) => (
               <div key={index} className="space-y-3 p-3 border rounded-lg">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor={`service-type-${index}`}>Type</Label>
                     <Input
                       id={`service-type-${index}`}
-                      value={service.type}
+                      value={service?.type || ''}
                       onChange={(e) => {
-                        const newServices = [...data.services];
+                        const newServices = [...services];
                         newServices[index].type = e.target.value;
-                        setData((prev) => ({ ...prev, services: newServices }));
+                        setServices(newServices);
                       }}
                       disabled={!isEditing}
                     />
@@ -389,11 +584,11 @@ export function AIProcessingReview({
                     <Input
                       id={`service-cost-${index}`}
                       type="number"
-                      value={service.cost}
+                      value={service?.cost || 0}
                       onChange={(e) => {
-                        const newServices = [...data.services];
+                        const newServices = [...services];
                         newServices[index].cost = parseFloat(e.target.value);
-                        setData((prev) => ({ ...prev, services: newServices }));
+                        setServices(newServices);
                       }}
                       disabled={!isEditing}
                     />
@@ -404,11 +599,11 @@ export function AIProcessingReview({
                   <Label htmlFor={`service-description-${index}`}>Description</Label>
                   <Textarea
                     id={`service-description-${index}`}
-                    value={service.description}
+                    value={service?.description || ''}
                     onChange={(e) => {
-                      const newServices = [...data.services];
+                      const newServices = [...services];
                       newServices[index].description = e.target.value;
-                      setData((prev) => ({ ...prev, services: newServices }));
+                      setServices(newServices);
                     }}
                     disabled={!isEditing}
                     rows={2}
@@ -421,17 +616,17 @@ export function AIProcessingReview({
           {/* Parts */}
           <div className="space-y-4">
             <h3 className="text-sm font-medium text-muted-foreground">Parts</h3>
-            {data.parts.map((part, index) => (
+            {parts.map((part, index) => (
               <div key={index} className="space-y-3 p-3 border rounded-lg">
                 <div className="space-y-2">
                   <Label htmlFor={`part-name-${index}`}>Part Name</Label>
                   <Input
                     id={`part-name-${index}`}
-                    value={part.name}
+                    value={part?.name || ''}
                     onChange={(e) => {
-                      const newParts = [...data.parts];
+                      const newParts = [...parts];
                       newParts[index].name = e.target.value;
-                      setData((prev) => ({ ...prev, parts: newParts }));
+                      setParts(newParts);
                     }}
                     disabled={!isEditing}
                   />
@@ -442,11 +637,11 @@ export function AIProcessingReview({
                     <Label htmlFor={`part-number-${index}`}>Part Number</Label>
                     <Input
                       id={`part-number-${index}`}
-                      value={part.partNumber}
+                      value={part?.partNumber || ''}
                       onChange={(e) => {
-                        const newParts = [...data.parts];
+                        const newParts = [...parts];
                         newParts[index].partNumber = e.target.value;
-                        setData((prev) => ({ ...prev, parts: newParts }));
+                        setParts(newParts);
                       }}
                       disabled={!isEditing}
                     />
@@ -457,11 +652,11 @@ export function AIProcessingReview({
                     <Input
                       id={`part-quantity-${index}`}
                       type="number"
-                      value={part.quantity}
+                      value={part?.quantity || 0}
                       onChange={(e) => {
-                        const newParts = [...data.parts];
+                        const newParts = [...parts];
                         newParts[index].quantity = parseInt(e.target.value);
-                        setData((prev) => ({ ...prev, parts: newParts }));
+                        setParts(newParts);
                       }}
                       disabled={!isEditing}
                     />
@@ -474,11 +669,11 @@ export function AIProcessingReview({
                     <Input
                       id={`part-unit-cost-${index}`}
                       type="number"
-                      value={part.unitCost}
+                      value={part?.unitCost || 0}
                       onChange={(e) => {
-                        const newParts = [...data.parts];
+                        const newParts = [...parts];
                         newParts[index].unitCost = parseFloat(e.target.value);
-                        setData((prev) => ({ ...prev, parts: newParts }));
+                        setParts(newParts);
                       }}
                       disabled={!isEditing}
                     />
@@ -489,11 +684,11 @@ export function AIProcessingReview({
                     <Input
                       id={`part-total-cost-${index}`}
                       type="number"
-                      value={part.totalCost}
+                      value={part?.totalCost || 0}
                       onChange={(e) => {
-                        const newParts = [...data.parts];
+                        const newParts = [...parts];
                         newParts[index].totalCost = parseFloat(e.target.value);
-                        setData((prev) => ({ ...prev, parts: newParts }));
+                        setParts(newParts);
                       }}
                       disabled={!isEditing}
                     />
@@ -513,8 +708,11 @@ export function AIProcessingReview({
                 <Input
                   id="subtotal"
                   type="number"
-                  value={data.costs.subtotal}
-                  onChange={(e) => handleFieldChange('costs.subtotal', parseFloat(e.target.value))}
+                  value={subtotal}
+                  onChange={(e) => {
+                    setSubtotal(parseFloat(e.target.value) || 0);
+                    handleFieldChange('costs.subtotal', parseFloat(e.target.value) || 0);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -524,8 +722,11 @@ export function AIProcessingReview({
                 <Input
                   id="laborCost"
                   type="number"
-                  value={data.costs.laborCost}
-                  onChange={(e) => handleFieldChange('costs.laborCost', parseFloat(e.target.value))}
+                  value={laborCost}
+                  onChange={(e) => {
+                    setLaborCost(parseFloat(e.target.value) || 0);
+                    handleFieldChange('costs.laborCost', parseFloat(e.target.value) || 0);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -537,8 +738,11 @@ export function AIProcessingReview({
                 <Input
                   id="partsCost"
                   type="number"
-                  value={data.costs.partsCost}
-                  onChange={(e) => handleFieldChange('costs.partsCost', parseFloat(e.target.value))}
+                  value={partsCost}
+                  onChange={(e) => {
+                    setPartsCost(parseFloat(e.target.value) || 0);
+                    handleFieldChange('costs.partsCost', parseFloat(e.target.value) || 0);
+                  }}
                   disabled={!isEditing}
                 />
               </div>
@@ -548,13 +752,14 @@ export function AIProcessingReview({
                 <Input
                   id="taxAmount"
                   type="number"
-                  value={data.costs.taxAmount || ''}
-                  onChange={(e) =>
+                  value={taxAmount}
+                  onChange={(e) => {
+                    setTaxAmount(e.target.value);
                     handleFieldChange(
                       'costs.taxAmount',
                       e.target.value ? parseFloat(e.target.value) : null,
-                    )
-                  }
+                    );
+                  }}
                   disabled={!isEditing}
                   placeholder="Tax amount"
                 />
@@ -566,8 +771,11 @@ export function AIProcessingReview({
               <Input
                 id="totalCost"
                 type="number"
-                value={data.costs.totalCost}
-                onChange={(e) => handleFieldChange('costs.totalCost', parseFloat(e.target.value))}
+                value={totalCost}
+                onChange={(e) => {
+                  setTotalCost(parseFloat(e.target.value) || 0);
+                  handleFieldChange('costs.totalCost', parseFloat(e.target.value) || 0);
+                }}
                 disabled={!isEditing}
                 className="font-semibold"
               />
@@ -576,7 +784,18 @@ export function AIProcessingReview({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
-            <Button onClick={handleApproved} className="flex-1" size="lg" disabled={isSubmitting}>
+            <Button
+              onClick={() => {
+                if (isEditing) {
+                  handleEdit();
+                } else {
+                  handleApproval();
+                }
+              }}
+              className="flex-1"
+              size="lg"
+              disabled={isSubmitting}
+            >
               <Check className="h-4 w-4 mr-2" />
               Approve
             </Button>

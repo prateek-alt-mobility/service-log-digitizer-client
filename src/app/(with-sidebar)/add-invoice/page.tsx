@@ -21,6 +21,7 @@ import {
   useGetDropdownVehiclesQuery,
   useUploadFileMutation,
   useTriggerAIParsingMutation,
+  ExtractedData,
 } from './add-invoice.api';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -35,6 +36,7 @@ import {
   Bot,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AIProcessingReview } from './components/ai-processing-review';
 
 const bypass = false;
 
@@ -201,11 +203,20 @@ const AddInvoicePage = () => {
       value: 'GENERAL',
     },
   ]);
-  // const [isAIProcessing, setIsAIProcessing] = useState(false);
+
+  const [extractedData, setExtractedData] = useState<ExtractedData | null>(null);
+  const [invoicePdfUrl, setInvoicePdfUrl] = useState<string>('');
+  const [serviceId, setServiceId] = useState<string>('');
+  const [refNo, setRefNo] = useState<string>('');
+  const [regNo, setRegNo] = useState<string>('');
+  const [serviceType, setServiceType] = useState<string>('');
+  const [priority, setPriority] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
 
   const [uploadFile] = useUploadFileMutation();
   const [createService] = useCreateServiceMutation();
   const [isAIParsing, setIsAIParsing] = useState(false);
+  const [isParseSuccess, setIsParseSuccess] = useState(false);
   const [triggerAIParsing, { isError: isAIParsingError }] = useTriggerAIParsingMutation();
   const uploadInvoiceValidationSchema = z.object({
     regNo: z.string().min(1, 'Registration number is required'),
@@ -250,11 +261,23 @@ const AddInvoicePage = () => {
       // Step 3: Trigger the AI parsing
       const serviceId = addInvoiceResponse.data?.data.id;
       if (!serviceId) throw new Error('Service ID is required');
-      await triggerAIParsing(serviceId).unwrap();
+      const aiParsingResponse = await triggerAIParsing(serviceId).unwrap();
+
+      setExtractedData(aiParsingResponse.data.extractedData as any);
+      setInvoicePdfUrl(invoicePdfUrl);
+      setServiceId(serviceId);
+      setIsParseSuccess(true);
       setIsAIParsing(false);
+      setRefNo(data.regNo + ' - ' + data.serviceType);
+      setRegNo(data.regNo);
+      setServiceType(data.serviceType);
+      setPriority('');
+      setDescription(data.description || '');
+
       if (addInvoiceResponse.error) throw new Error('Error adding invoice');
       toast.success('Invoice added successfully');
     } catch (error) {
+      console.log(error);
       toast.error('Error uploading invoice');
     }
   };
@@ -276,6 +299,22 @@ const AddInvoicePage = () => {
     <div>
       {isAIParsing && !isAIParsingError ? (
         <AIParsingLoader />
+      ) : isParseSuccess ? (
+        <div>
+          <AIProcessingReview
+            extractedData={extractedData!}
+            pdfUrl={invoicePdfUrl}
+            serviceId={serviceId}
+            refNo={refNo}
+            regNo={regNo}
+            serviceType={serviceType}
+            priority={priority}
+            description={description}
+            onApproved={() => {}}
+            onReject={() => {}}
+            onSuccess={() => {}}
+          />
+        </div>
       ) : (
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
