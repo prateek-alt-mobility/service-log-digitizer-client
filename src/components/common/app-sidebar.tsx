@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { PieChart, Plus } from 'lucide-react';
+import { PieChart, Plus, Upload } from 'lucide-react';
 
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
@@ -25,6 +25,11 @@ const data = [
     title: 'Add Invoice',
     url: '/add-invoice',
     icon: Plus,
+  },
+  {
+    title: 'File Upload',
+    url: '/file-upload',
+    icon: Upload,
   },
 ];
 
