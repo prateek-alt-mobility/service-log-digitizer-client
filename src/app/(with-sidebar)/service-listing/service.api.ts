@@ -183,13 +183,13 @@ const serviceApi = api.injectEndpoints({
           const result = await exportServiceBaseQuery(
             `${SERVICE_API_ENDPOINTS.EXPORT_SERVICE}/${id}/export?format=${format}`,
             api,
-            {}
+            {},
           );
-          
+
           if (result.error) {
             return { error: result.error };
           }
-          
+
           return { data: result.data as ExportResponse };
         } catch (error) {
           return { error: { status: 'FETCH_ERROR', error: String(error) } };

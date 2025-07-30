@@ -198,7 +198,7 @@ export default function ServiceDetail() {
     setIsExporting(true);
     try {
       const response = await exportService({ id: service._id, format }).unwrap();
-      
+
       if (response.data.url) {
         // Open the file in a new tab
         window.open(response.data.url, '_blank');
@@ -217,7 +217,7 @@ export default function ServiceDetail() {
     setIsExporting(true);
     try {
       const response = await exportService({ id: service._id, format: 'pdf' }).unwrap();
-      
+
       if (response.data.url) {
         await navigator.clipboard.writeText(response.data.url);
         // Could add toast notification here
@@ -307,13 +307,13 @@ export default function ServiceDetail() {
                 )}
               </div>
             </div>
-            
+
             {/* Export Dropdown Button */}
             <div className="flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     disabled={isExporting}
                     className="w-full sm:w-auto"
                     size="sm"
@@ -386,7 +386,9 @@ export default function ServiceDetail() {
                     <div className="flex items-center justify-center h-48 sm:h-64 border-2 border-dashed border-muted-foreground/25 rounded-lg">
                       <div className="text-center p-4">
                         <FileText className="h-8 sm:h-12 w-8 sm:w-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-muted-foreground text-sm sm:text-base">No document available</p>
+                        <p className="text-muted-foreground text-sm sm:text-base">
+                          No document available
+                        </p>
                       </div>
                     </div>
                   )}
@@ -407,7 +409,9 @@ export default function ServiceDetail() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {service.extractedData.vehicleInfo.vin && (
                       <div>
-                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">VIN</label>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          VIN
+                        </label>
                         <p className="text-sm sm:text-base font-medium break-all">
                           {service.extractedData.vehicleInfo.vin}
                         </p>
@@ -425,7 +429,9 @@ export default function ServiceDetail() {
                     )}
                     {service.extractedData.vehicleInfo.make && (
                       <div>
-                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Make</label>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          Make
+                        </label>
                         <p className="text-sm sm:text-base font-medium">
                           {service.extractedData.vehicleInfo.make}
                         </p>
@@ -433,7 +439,9 @@ export default function ServiceDetail() {
                     )}
                     {service.extractedData.vehicleInfo.model && (
                       <div>
-                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Model</label>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          Model
+                        </label>
                         <p className="text-sm sm:text-base font-medium">
                           {service.extractedData.vehicleInfo.model}
                         </p>
@@ -441,7 +449,9 @@ export default function ServiceDetail() {
                     )}
                     {service.extractedData.vehicleInfo.mileage && (
                       <div>
-                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Mileage</label>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          Mileage
+                        </label>
                         <p className="text-sm sm:text-base font-medium">
                           {service.extractedData.vehicleInfo.mileage.toLocaleString()} km
                         </p>
@@ -449,7 +459,9 @@ export default function ServiceDetail() {
                     )}
                     {service.extractedData.vehicleInfo.year && (
                       <div>
-                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Year</label>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          Year
+                        </label>
                         <p className="text-sm sm:text-base font-medium">
                           {service.extractedData.vehicleInfo.year}
                         </p>
@@ -478,7 +490,9 @@ export default function ServiceDetail() {
                           <TableHead className="text-xs sm:text-sm">Description</TableHead>
                           <TableHead className="text-right text-xs sm:text-sm">Cost</TableHead>
                           {service.extractedData.services.some((s) => s.laborHours) && (
-                            <TableHead className="text-right text-xs sm:text-sm">Labor Hours</TableHead>
+                            <TableHead className="text-right text-xs sm:text-sm">
+                              Labor Hours
+                            </TableHead>
                           )}
                         </TableRow>
                       </TableHeader>
@@ -526,7 +540,9 @@ export default function ServiceDetail() {
                           <TableHead className="text-xs sm:text-sm">Part Number</TableHead>
                           <TableHead className="text-right text-xs sm:text-sm">Qty</TableHead>
                           <TableHead className="text-right text-xs sm:text-sm">Unit Cost</TableHead>
-                          <TableHead className="text-right text-xs sm:text-sm">Total Cost</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">
+                            Total Cost
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -535,8 +551,12 @@ export default function ServiceDetail() {
                             <TableCell className="font-medium text-xs sm:text-sm max-w-[150px] break-words">
                               {part.name || 'Unknown Part'}
                             </TableCell>
-                            <TableCell className="text-xs sm:text-sm">{part.partNumber || 'N/A'}</TableCell>
-                            <TableCell className="text-right text-xs sm:text-sm">{part.quantity || 0}</TableCell>
+                            <TableCell className="text-xs sm:text-sm">
+                              {part.partNumber || 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">
+                              {part.quantity || 0}
+                            </TableCell>
                             <TableCell className="text-right text-xs sm:text-sm">
                               {part.unitCost ? formatCurrency(part.unitCost) : 'N/A'}
                             </TableCell>
@@ -577,7 +597,9 @@ export default function ServiceDetail() {
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Invoice Number
                         </label>
-                        <p className="text-sm sm:text-base break-all">{service.extractedData.invoiceNumber}</p>
+                        <p className="text-sm sm:text-base break-all">
+                          {service.extractedData.invoiceNumber}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.shopName && (
@@ -593,7 +615,9 @@ export default function ServiceDetail() {
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Address
                         </label>
-                        <p className="text-sm sm:text-base break-words">{service.extractedData.shopAddress}</p>
+                        <p className="text-sm sm:text-base break-words">
+                          {service.extractedData.shopAddress}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.shopPhone && (
@@ -623,10 +647,14 @@ export default function ServiceDetail() {
             {service.invoice?.processingError && (
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-destructive text-lg sm:text-xl">Processing Error</CardTitle>
+                  <CardTitle className="text-destructive text-lg sm:text-xl">
+                    Processing Error
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs sm:text-sm text-destructive break-words">{service.invoice.processingError}</p>
+                  <p className="text-xs sm:text-sm text-destructive break-words">
+                    {service.invoice.processingError}
+                  </p>
                 </CardContent>
               </Card>
             )}
@@ -800,19 +828,27 @@ export default function ServiceDetail() {
               <CardContent className="space-y-3 sm:space-y-4">
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Service No</span>
-                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.serviceNo || 'N/A'}</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">
+                    {service.serviceNo || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Reference No</span>
-                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.refNo || 'N/A'}</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">
+                    {service.refNo || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Registration No</span>
-                  <span className="text-xs sm:text-sm font-medium text-right">{service.regNo || 'N/A'}</span>
+                  <span className="text-xs sm:text-sm font-medium text-right">
+                    {service.regNo || 'N/A'}
+                  </span>
                 </div>
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Service Type</span>
-                  <Badge variant="outline" className="text-xs">{service.serviceType || 'Unknown'}</Badge>
+                  <Badge variant="outline" className="text-xs">
+                    {service.serviceType || 'Unknown'}
+                  </Badge>
                 </div>
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Status</span>
@@ -847,7 +883,9 @@ export default function ServiceDetail() {
                 </div>
                 <div className="flex justify-between items-start gap-2">
                   <span className="text-xs sm:text-sm text-muted-foreground">Updated By</span>
-                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.updatedBy || 'N/A'}</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">
+                    {service.updatedBy || 'N/A'}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -869,19 +907,27 @@ export default function ServiceDetail() {
                   </div>
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-xs sm:text-sm text-muted-foreground">Data Verified</span>
-                    <Badge variant={service.isDataVerified ? 'default' : 'secondary'} className="text-xs">
+                    <Badge
+                      variant={service.isDataVerified ? 'default' : 'secondary'}
+                      className="text-xs"
+                    >
                       {service.isDataVerified ? 'Yes' : 'No'}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-xs sm:text-sm text-muted-foreground">Manual Review</span>
-                    <Badge variant={service.requiresManualReview ? 'destructive' : 'secondary'} className="text-xs">
+                    <Badge
+                      variant={service.requiresManualReview ? 'destructive' : 'secondary'}
+                      className="text-xs"
+                    >
                       {service.requiresManualReview ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
                   {service.invoice?.processingMetrics?.totalTime && (
                     <div className="flex justify-between items-center gap-2">
-                      <span className="text-xs sm:text-sm text-muted-foreground">Processing Time</span>
+                      <span className="text-xs sm:text-sm text-muted-foreground">
+                        Processing Time
+                      </span>
                       <span className="text-xs sm:text-sm font-medium">
                         {service.invoice.processingMetrics.totalTime.toFixed(2)}s
                       </span>

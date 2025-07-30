@@ -162,10 +162,10 @@ const convertToCSV = (services: ServiceItem[]) => {
     'Vehicle Year',
     'Vehicle Mileage',
     'Data Verified',
-    'Requires Manual Review'
+    'Requires Manual Review',
   ];
 
-  const csvData = services.map(service => [
+  const csvData = services.map((service) => [
     service.serviceNo,
     service.refNo,
     service.regNo,
@@ -187,11 +187,11 @@ const convertToCSV = (services: ServiceItem[]) => {
     service.extractedData?.vehicleInfo?.year || '',
     service.extractedData?.vehicleInfo?.mileage || '',
     service.isDataVerified ? 'Yes' : 'No',
-    service.requiresManualReview ? 'Yes' : 'No'
+    service.requiresManualReview ? 'Yes' : 'No',
   ]);
 
   const csvContent = [headers, ...csvData]
-    .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+    .map((row) => row.map((field) => `"${String(field).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
   return csvContent;
