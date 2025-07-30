@@ -299,7 +299,7 @@ export default function ServiceListing() {
               className="w-full px-4 py-2 border border-input rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {statuses.map((status) => (
               <Button
                 key={status}
