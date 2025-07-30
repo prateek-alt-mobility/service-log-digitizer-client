@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, User, Building, ArrowRight, Loader2 } from 'lucide-react';
+import { FileText, Calendar, User, Building, ArrowRight, Loader2, Download } from 'lucide-react';
 import { PDFPreview } from '@/components/ui/pdf-preview';
 import { useGetServicesQuery } from './service.api';
 import { ServiceItem } from './service.api';
@@ -138,9 +138,82 @@ function ServiceCard({ service }: { service: ServiceItem }) {
   );
 }
 
+// Utility function to convert service data to CSV
+const convertToCSV = (services: ServiceItem[]) => {
+  const headers = [
+    'Service No',
+    'Reference No',
+    'Registration No',
+    'Service Type',
+    'Status',
+    'Priority',
+    'Description',
+    'Created By',
+    'Created Date',
+    'Service Date',
+    'Total Cost',
+    'Invoice Number',
+    'Shop Name',
+    'Shop Address',
+    'Shop Phone',
+    'Vehicle VIN',
+    'Vehicle Make',
+    'Vehicle Model',
+    'Vehicle Year',
+    'Vehicle Mileage',
+    'Data Verified',
+    'Requires Manual Review'
+  ];
+
+  const csvData = services.map(service => [
+    service.serviceNo,
+    service.refNo,
+    service.regNo,
+    service.serviceType,
+    service.status,
+    service.priority,
+    service.description || '',
+    service.createdBy,
+    new Date(service.createdAt).toLocaleDateString(),
+    service.serviceDate ? new Date(service.serviceDate).toLocaleDateString() : '',
+    service.totalCost || service.extractedData?.costs?.totalCost || 0,
+    service.extractedData?.invoiceNumber || '',
+    service.extractedData?.shopName || '',
+    service.extractedData?.shopAddress || '',
+    service.extractedData?.shopPhone || '',
+    service.extractedData?.vehicleInfo?.vin || '',
+    service.extractedData?.vehicleInfo?.make || '',
+    service.extractedData?.vehicleInfo?.model || '',
+    service.extractedData?.vehicleInfo?.year || '',
+    service.extractedData?.vehicleInfo?.mileage || '',
+    service.isDataVerified ? 'Yes' : 'No',
+    service.requiresManualReview ? 'Yes' : 'No'
+  ]);
+
+  const csvContent = [headers, ...csvData]
+    .map(row => row.map(field => `"${String(field).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  return csvContent;
+};
+
+// Function to download CSV
+const downloadCSV = (csvContent: string, filename: string) => {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
 export default function ServiceListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [isExporting, setIsExporting] = useState(false);
 
   // Use Redux Toolkit Query hook
   const { data: apiResponse, isLoading, error, refetch } = useGetServicesQuery();
@@ -157,6 +230,20 @@ export default function ServiceListing() {
     const matchesStatus = selectedStatus === 'All' || service.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
+
+  const handleExportCSV = () => {
+    setIsExporting(true);
+    try {
+      const csvContent = convertToCSV(filteredServices);
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `service-listings-${timestamp}.csv`;
+      downloadCSV(csvContent, filename);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -200,7 +287,7 @@ export default function ServiceListing() {
           </p>
         </div>
 
-        {/* Filters */}
+        {/* Filters and Export */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
             <input
@@ -223,6 +310,20 @@ export default function ServiceListing() {
                 {status}
               </Button>
             ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              disabled={isExporting || filteredServices.length === 0}
+              className="text-xs"
+            >
+              {isExporting ? (
+                <Loader2 className="h-3 w-3 animate-spin mr-1" />
+              ) : (
+                <Download className="h-3 w-3 mr-1" />
+              )}
+              Export CSV
+            </Button>
           </div>
         </div>
 

@@ -1,9 +1,11 @@
 'use client';
 import { useGetInvoiceAnalyticsQuery } from './home.api';
+import ServiceListing from './service-listing/page';
 
 export default function Home() {
   const { data, isLoading } = useGetInvoiceAnalyticsQuery();
   console.log(data);
-  if (isLoading) return <div>Loading...</div>;
-  return <div className="bg-background text-foreground">Home</div>;
+  
+  // Render the ServiceListing component instead of basic home content
+  return <ServiceListing />;
 }

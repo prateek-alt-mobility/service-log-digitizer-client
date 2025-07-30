@@ -198,4 +198,4 @@ export const SERVICE_CONFIG = {
     shopAddressLabel: 'Shop Address',
     shopPhoneLabel: 'Shop Phone',
   },
-} as const; 
+} as const;

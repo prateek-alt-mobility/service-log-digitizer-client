@@ -6,7 +6,20 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PDFPreview } from '@/components/ui/pdf-preview';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import {
   ChartContainer,
   ChartTooltip,
@@ -36,11 +49,15 @@ import {
   DollarSign,
   Car,
   Settings,
+  ChevronDown,
+  Copy,
+  FileDown,
 } from 'lucide-react';
-import { useGetServicesQuery } from '../service.api';
+import { useGetServicesQuery, useExportServiceMutation } from '../service.api';
 import { ServiceItem } from '../service.api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, ResponsiveContainer } from 'recharts';
 import { SERVICE_CONFIG } from '../config';
+import { useState } from 'react';
 
 function getStatusIcon(status: string) {
   switch (status.toUpperCase()) {
@@ -102,9 +119,11 @@ export default function ServiceDetail() {
   const params = useParams();
   const router = useRouter();
   const serviceId = params.id as string;
+  const [isExporting, setIsExporting] = useState(false);
 
   // Use Redux Toolkit Query hook
   const { data: apiResponse, isLoading, error } = useGetServicesQuery();
+  const [exportService] = useExportServiceMutation();
 
   const services = apiResponse?.data?.data || [];
   const service = services.find((s) => s._id === serviceId);
@@ -112,15 +131,14 @@ export default function ServiceDetail() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(
       SERVICE_CONFIG.dateFormat.locale,
-      SERVICE_CONFIG.dateFormat.options
+      SERVICE_CONFIG.dateFormat.options,
     );
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat(
-      SERVICE_CONFIG.currency.locale,
-      SERVICE_CONFIG.currency
-    ).format(amount);
+    return new Intl.NumberFormat(SERVICE_CONFIG.currency.locale, SERVICE_CONFIG.currency).format(
+      amount,
+    );
   };
 
   const getFileSize = (url: string) => {
@@ -132,7 +150,7 @@ export default function ServiceDetail() {
   const getPartsChartData = () => {
     if (!service?.extractedData?.parts) return [];
     return service.extractedData.parts
-      .filter(part => part && part.name && part.totalCost)
+      .filter((part) => part && part.name && part.totalCost)
       .map((part, index) => ({
         name: part.name || 'Unknown Part',
         value: part.totalCost || 0,
@@ -144,7 +162,7 @@ export default function ServiceDetail() {
   const getServicesChartData = () => {
     if (!service?.extractedData?.services) return [];
     return service.extractedData.services
-      .filter(service => service && service.type && service.cost)
+      .filter((service) => service && service.type && service.cost)
       .map((service, index) => ({
         name: service.type || 'Unknown Service',
         value: service.cost || 0,
@@ -156,27 +174,65 @@ export default function ServiceDetail() {
   const getCostBreakdownData = () => {
     if (!service?.extractedData?.costs) return [];
     return [
-      { 
-        name: 'Parts', 
-        value: service.extractedData.costs.partsCost || 0, 
-        color: SERVICE_CONFIG.chartColors.costBreakdown.parts 
+      {
+        name: 'Parts',
+        value: service.extractedData.costs.partsCost || 0,
+        color: SERVICE_CONFIG.chartColors.costBreakdown.parts,
       },
-      { 
-        name: 'Labor', 
-        value: service.extractedData.costs.laborCost || 0, 
-        color: SERVICE_CONFIG.chartColors.costBreakdown.labor 
+      {
+        name: 'Labor',
+        value: service.extractedData.costs.laborCost || 0,
+        color: SERVICE_CONFIG.chartColors.costBreakdown.labor,
       },
-      { 
-        name: 'Tax', 
-        value: service.extractedData.costs.taxAmount || 0, 
-        color: SERVICE_CONFIG.chartColors.costBreakdown.tax 
+      {
+        name: 'Tax',
+        value: service.extractedData.costs.taxAmount || 0,
+        color: SERVICE_CONFIG.chartColors.costBreakdown.tax,
       },
     ];
   };
 
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    if (!service) return;
+
+    setIsExporting(true);
+    try {
+      const response = await exportService({ id: service._id, format }).unwrap();
+      
+      if (response.data.url) {
+        // Open the file in a new tab
+        window.open(response.data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Export failed:', error);
+      // Could add toast notification here
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCopyLink = async () => {
+    if (!service) return;
+
+    setIsExporting(true);
+    try {
+      const response = await exportService({ id: service._id, format: 'pdf' }).unwrap();
+      
+      if (response.data.url) {
+        await navigator.clipboard.writeText(response.data.url);
+        // Could add toast notification here
+      }
+    } catch (error) {
+      console.error('Copy link failed:', error);
+      // Could add toast notification here
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">{SERVICE_CONFIG.labels.loading}</p>
@@ -187,10 +243,12 @@ export default function ServiceDetail() {
 
   if (error || !service) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">{SERVICE_CONFIG.labels.notFound}</h1>
-          <p className="text-muted-foreground mb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
+            {SERVICE_CONFIG.labels.notFound}
+          </h1>
+          <p className="text-muted-foreground mb-4 text-sm sm:text-base">
             {error &&
             'data' in error &&
             typeof error.data === 'object' &&
@@ -210,50 +268,87 @@ export default function ServiceDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className={`${SERVICE_CONFIG.ui.maxWidth} mx-auto ${SERVICE_CONFIG.ui.padding}`}>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {/* Header */}
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => router.push(SERVICE_CONFIG.navigation.backRoute)} className="mb-4">
+        <div className="mb-4 sm:mb-6">
+          <Button
+            variant="ghost"
+            onClick={() => router.push(SERVICE_CONFIG.navigation.backRoute)}
+            className="mb-3 sm:mb-4 p-2 sm:px-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Services
+            <span className="hidden sm:inline">Back to Services</span>
+            <span className="sm:hidden">Back</span>
           </Button>
 
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-foreground mb-2">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground mb-2 break-words">
                 {service.invoice?.fileName || service.serviceNo || 'Service Details'}
               </h1>
-                              <div className="flex items-center gap-4 text-muted-foreground mb-4">
-                  {service.refNo && (
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4" />
-                      <span>{service.refNo}</span>
-                    </div>
-                  )}
-                  {service.createdBy && (
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      <span>{service.createdBy}</span>
-                    </div>
-                  )}
-                  {service.createdAt && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>{formatDate(service.createdAt)}</span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground mb-4">
+                {service.refNo && (
+                  <div className="flex items-center gap-2">
+                    <Building className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{service.refNo}</span>
+                  </div>
+                )}
+                {service.createdBy && (
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{service.createdBy}</span>
+                  </div>
+                )}
+                {service.createdAt && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <span className="truncate">{formatDate(service.createdAt)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {/* Export Dropdown Button */}
+            <div className="flex-shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    disabled={isExporting}
+                    className="w-full sm:w-auto"
+                    size="sm"
+                  >
+                    {isExporting ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Download className="h-4 w-4 mr-2" />
+                    )}
+                    Export
+                    <ChevronDown className="h-4 w-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => handleExport('pdf')}>
+                    <FileDown className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCopyLink}>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy PDF Link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="xl:col-span-2 space-y-4 sm:space-y-6">
             {/* PDF Preview */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                   <FileText className="h-5 w-5" />
                   Document Preview
                 </CardTitle>
@@ -262,14 +357,19 @@ export default function ServiceDetail() {
                 <div className="space-y-4">
                   {/* Document Info */}
                   <div className="flex flex-col items-center justify-center mb-4">
-                    <h3 className="text-lg font-semibold text-primary mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-primary mb-2 text-center break-words">
                       {service.invoice?.fileName || service.serviceNo || 'Document'}
                     </h3>
-                    <div className="space-y-1 text-sm text-muted-foreground text-center">
+                    <div className="space-y-1 text-xs sm:text-sm text-muted-foreground text-center">
                       <div>Status: {service.invoice?.processingStatus || 'Unknown'}</div>
                       <div>Size: {getFileSize(service.invoice?.fileUrl || '')}</div>
                       <div>
-                        Uploaded: {service.invoice?.uploadedAt ? formatDate(service.invoice.uploadedAt) : (service.createdAt ? formatDate(service.createdAt) : 'Unknown')}
+                        Uploaded:{' '}
+                        {service.invoice?.uploadedAt
+                          ? formatDate(service.invoice.uploadedAt)
+                          : service.createdAt
+                            ? formatDate(service.createdAt)
+                            : 'Unknown'}
                       </div>
                     </div>
                   </div>
@@ -283,10 +383,10 @@ export default function ServiceDetail() {
                       showActions={true}
                     />
                   ) : (
-                    <div className="flex items-center justify-center h-64 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-                      <div className="text-center">
-                        <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                        <p className="text-muted-foreground">No document available</p>
+                    <div className="flex items-center justify-center h-48 sm:h-64 border-2 border-dashed border-muted-foreground/25 rounded-lg">
+                      <div className="text-center p-4">
+                        <FileText className="h-8 sm:h-12 w-8 sm:w-12 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-muted-foreground text-sm sm:text-base">No document available</p>
                       </div>
                     </div>
                   )}
@@ -297,48 +397,62 @@ export default function ServiceDetail() {
             {/* Vehicle Information */}
             {service.extractedData?.vehicleInfo && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Car className="h-5 w-5" />
                     Vehicle Information
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {service.extractedData.vehicleInfo.vin && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">VIN</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.vin}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">VIN</label>
+                        <p className="text-sm sm:text-base font-medium break-all">
+                          {service.extractedData.vehicleInfo.vin}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.vehicleInfo.registrationNumber && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Registration</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.registrationNumber}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
+                          Registration
+                        </label>
+                        <p className="text-sm sm:text-base font-medium">
+                          {service.extractedData.vehicleInfo.registrationNumber}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.vehicleInfo.make && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Make</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.make}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Make</label>
+                        <p className="text-sm sm:text-base font-medium">
+                          {service.extractedData.vehicleInfo.make}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.vehicleInfo.model && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Model</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.model}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Model</label>
+                        <p className="text-sm sm:text-base font-medium">
+                          {service.extractedData.vehicleInfo.model}
+                        </p>
                       </div>
                     )}
                     {service.extractedData.vehicleInfo.mileage && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Mileage</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.mileage.toLocaleString()} km</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Mileage</label>
+                        <p className="text-sm sm:text-base font-medium">
+                          {service.extractedData.vehicleInfo.mileage.toLocaleString()} km
+                        </p>
                       </div>
                     )}
                     {service.extractedData.vehicleInfo.year && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Year</label>
-                        <p className="text-sm font-medium">{service.extractedData.vehicleInfo.year}</p>
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">Year</label>
+                        <p className="text-sm sm:text-base font-medium">
+                          {service.extractedData.vehicleInfo.year}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -349,41 +463,47 @@ export default function ServiceDetail() {
             {/* Services */}
             {service.extractedData?.services && service.extractedData.services.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Wrench className="h-5 w-5" />
                     Services ({service.extractedData.services.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Service Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Cost</TableHead>
-                        {service.extractedData.services.some(s => s.laborHours) && (
-                          <TableHead className="text-right">Labor Hours</TableHead>
-                        )}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {service.extractedData.services.map((serviceItem, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{serviceItem.type || 'Unknown'}</TableCell>
-                          <TableCell>{serviceItem.description || 'No description'}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {serviceItem.cost ? formatCurrency(serviceItem.cost) : 'N/A'}
-                          </TableCell>
-                          {service.extractedData.services.some(s => s.laborHours) && (
-                            <TableCell className="text-right">
-                              {serviceItem.laborHours || '-'}
-                            </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Service Type</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Description</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Cost</TableHead>
+                          {service.extractedData.services.some((s) => s.laborHours) && (
+                            <TableHead className="text-right text-xs sm:text-sm">Labor Hours</TableHead>
                           )}
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {service.extractedData.services.map((serviceItem, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium text-xs sm:text-sm">
+                              {serviceItem.type || 'Unknown'}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm max-w-[200px] break-words">
+                              {serviceItem.description || 'No description'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-xs sm:text-sm">
+                              {serviceItem.cost ? formatCurrency(serviceItem.cost) : 'N/A'}
+                            </TableCell>
+                            {service.extractedData.services.some((s) => s.laborHours) && (
+                              <TableCell className="text-right text-xs sm:text-sm">
+                                {serviceItem.laborHours || '-'}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -391,48 +511,54 @@ export default function ServiceDetail() {
             {/* Parts */}
             {service.extractedData?.parts && service.extractedData.parts.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Package className="h-5 w-5" />
                     Parts ({service.extractedData.parts.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Part Name</TableHead>
-                        <TableHead>Part Number</TableHead>
-                        <TableHead className="text-right">Qty</TableHead>
-                        <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead className="text-right">Total Cost</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {service.extractedData.parts.map((part, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{part.name || 'Unknown Part'}</TableCell>
-                          <TableCell>{part.partNumber || 'N/A'}</TableCell>
-                          <TableCell className="text-right">{part.quantity || 0}</TableCell>
-                          <TableCell className="text-right">{part.unitCost ? formatCurrency(part.unitCost) : 'N/A'}</TableCell>
-                          <TableCell className="text-right font-medium">
-                            {part.totalCost ? formatCurrency(part.totalCost) : 'N/A'}
-                          </TableCell>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Part Name</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Part Number</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Qty</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Unit Cost</TableHead>
+                          <TableHead className="text-right text-xs sm:text-sm">Total Cost</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {service.extractedData.parts.map((part, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium text-xs sm:text-sm max-w-[150px] break-words">
+                              {part.name || 'Unknown Part'}
+                            </TableCell>
+                            <TableCell className="text-xs sm:text-sm">{part.partNumber || 'N/A'}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">{part.quantity || 0}</TableCell>
+                            <TableCell className="text-right text-xs sm:text-sm">
+                              {part.unitCost ? formatCurrency(part.unitCost) : 'N/A'}
+                            </TableCell>
+                            <TableCell className="text-right font-medium text-xs sm:text-sm">
+                              {part.totalCost ? formatCurrency(part.totalCost) : 'N/A'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             )}
 
             {/* Description */}
             <Card>
-              <CardHeader>
-                <CardTitle>Description</CardTitle>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl">Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-muted-foreground leading-relaxed text-sm sm:text-base">
                   {service.description || 'No description available'}
                 </p>
               </CardContent>
@@ -441,49 +567,53 @@ export default function ServiceDetail() {
             {/* Extracted Data */}
             {service.extractedData && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Extracted Information</CardTitle>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-lg sm:text-xl">Extracted Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     {service.extractedData.invoiceNumber && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Invoice Number
                         </label>
-                        <p className="text-sm">{service.extractedData.invoiceNumber}</p>
+                        <p className="text-sm sm:text-base break-all">{service.extractedData.invoiceNumber}</p>
                       </div>
                     )}
                     {service.extractedData.shopName && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Name
                         </label>
-                        <p className="text-sm">{service.extractedData.shopName}</p>
+                        <p className="text-sm sm:text-base">{service.extractedData.shopName}</p>
                       </div>
                     )}
                     {service.extractedData.shopAddress && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Address
                         </label>
-                        <p className="text-sm">{service.extractedData.shopAddress}</p>
+                        <p className="text-sm sm:text-base break-words">{service.extractedData.shopAddress}</p>
                       </div>
                     )}
                     {service.extractedData.shopPhone && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">
+                        <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Phone
                         </label>
-                        <p className="text-sm">{service.extractedData.shopPhone}</p>
+                        <p className="text-sm sm:text-base">{service.extractedData.shopPhone}</p>
                       </div>
                     )}
-                    {!service.extractedData.invoiceNumber && !service.extractedData.shopName && 
-                     !service.extractedData.shopAddress && !service.extractedData.shopPhone && (
-                      <div className="col-span-2">
-                        <p className="text-sm text-muted-foreground">No extracted information available</p>
-                      </div>
-                    )}
+                    {!service.extractedData.invoiceNumber &&
+                      !service.extractedData.shopName &&
+                      !service.extractedData.shopAddress &&
+                      !service.extractedData.shopPhone && (
+                        <div className="col-span-1 sm:col-span-2">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
+                            No extracted information available
+                          </p>
+                        </div>
+                      )}
                   </div>
                 </CardContent>
               </Card>
@@ -492,33 +622,33 @@ export default function ServiceDetail() {
             {/* Processing Information */}
             {service.invoice?.processingError && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-destructive">Processing Error</CardTitle>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="text-destructive text-lg sm:text-xl">Processing Error</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-destructive">{service.invoice.processingError}</p>
+                  <p className="text-xs sm:text-sm text-destructive break-words">{service.invoice.processingError}</p>
                 </CardContent>
               </Card>
             )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Cost Breakdown Charts */}
             {service.extractedData?.costs && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <DollarSign className="h-5 w-5" />
                     Cost Breakdown
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                     {/* Overall Cost Breakdown */}
                     <div>
                       <h4 className="text-sm font-medium mb-3">Cost Distribution</h4>
-                      <div className="h-48">
+                      <div className="h-32 sm:h-48">
                         <ChartContainer
                           config={{
                             parts: { color: SERVICE_CONFIG.chartColors.costBreakdown.parts },
@@ -531,8 +661,8 @@ export default function ServiceDetail() {
                               data={getCostBreakdownData()}
                               cx="50%"
                               cy="50%"
-                              innerRadius={40}
-                              outerRadius={80}
+                              innerRadius={20}
+                              outerRadius={60}
                               paddingAngle={5}
                               dataKey="value"
                             >
@@ -546,13 +676,13 @@ export default function ServiceDetail() {
                       </div>
                       <div className="mt-3 space-y-2">
                         {getCostBreakdownData().map((item, index) => (
-                          <div key={index} className="flex justify-between text-sm">
+                          <div key={index} className="flex justify-between text-xs sm:text-sm">
                             <div className="flex items-center gap-2">
                               <div
-                                className="w-3 h-3 rounded-full"
+                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
                                 style={{ backgroundColor: item.color }}
                               />
-                              <span>{item.name}</span>
+                              <span className="truncate">{item.name}</span>
                             </div>
                             <span className="font-medium">{formatCurrency(item.value)}</span>
                           </div>
@@ -564,21 +694,29 @@ export default function ServiceDetail() {
                     <Separator />
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Subtotal</span>
-                        <span className="text-sm font-medium">
-                          {service.extractedData.costs.subtotal ? formatCurrency(service.extractedData.costs.subtotal) : 'N/A'}
+                        <span className="text-xs sm:text-sm text-muted-foreground">Subtotal</span>
+                        <span className="text-xs sm:text-sm font-medium">
+                          {service.extractedData.costs.subtotal
+                            ? formatCurrency(service.extractedData.costs.subtotal)
+                            : 'N/A'}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Tax</span>
-                        <span className="text-sm font-medium">
-                          {service.extractedData.costs.taxAmount ? formatCurrency(service.extractedData.costs.taxAmount) : 'N/A'}
+                        <span className="text-xs sm:text-sm text-muted-foreground">Tax</span>
+                        <span className="text-xs sm:text-sm font-medium">
+                          {service.extractedData.costs.taxAmount
+                            ? formatCurrency(service.extractedData.costs.taxAmount)
+                            : 'N/A'}
                         </span>
                       </div>
                       <Separator />
-                      <div className="flex justify-between text-lg font-bold">
+                      <div className="flex justify-between text-base sm:text-lg font-bold">
                         <span>Total</span>
-                        <span>{service.extractedData.costs.totalCost ? formatCurrency(service.extractedData.costs.totalCost) : 'N/A'}</span>
+                        <span>
+                          {service.extractedData.costs.totalCost
+                            ? formatCurrency(service.extractedData.costs.totalCost)
+                            : 'N/A'}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -589,22 +727,28 @@ export default function ServiceDetail() {
             {/* Parts Cost Chart */}
             {service.extractedData?.parts && service.extractedData.parts.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Package className="h-5 w-5" />
                     Parts Cost
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ChartContainer
                       config={{
                         value: { color: SERVICE_CONFIG.chartColors.partsChart },
                       }}
                     >
                       <BarChart data={getPartsChartData()}>
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                        <YAxis fontSize={12} />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          fontSize={10}
+                        />
+                        <YAxis fontSize={10} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.partsChart} />
                       </BarChart>
@@ -617,22 +761,28 @@ export default function ServiceDetail() {
             {/* Services Cost Chart */}
             {service.extractedData?.services && service.extractedData.services.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Wrench className="h-5 w-5" />
                     Services Cost
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     <ChartContainer
                       config={{
                         value: { color: SERVICE_CONFIG.chartColors.servicesChart },
                       }}
                     >
                       <BarChart data={getServicesChartData()}>
-                        <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} fontSize={12} />
-                        <YAxis fontSize={12} />
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          fontSize={10}
+                        />
+                        <YAxis fontSize={10} />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.servicesChart} />
                       </BarChart>
@@ -644,87 +794,95 @@ export default function ServiceDetail() {
 
             {/* Service Information */}
             <Card>
-              <CardHeader>
-                <CardTitle>Service Information</CardTitle>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl">Service Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Service No</span>
-                  <span className="text-sm font-medium">{service.serviceNo || 'N/A'}</span>
+              <CardContent className="space-y-3 sm:space-y-4">
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Service No</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.serviceNo || 'N/A'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Reference No</span>
-                  <span className="text-sm font-medium">{service.refNo || 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Reference No</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.refNo || 'N/A'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Registration No</span>
-                  <span className="text-sm font-medium">{service.regNo || 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Registration No</span>
+                  <span className="text-xs sm:text-sm font-medium text-right">{service.regNo || 'N/A'}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Service Type</span>
-                  <Badge variant="outline">{service.serviceType || 'Unknown'}</Badge>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Service Type</span>
+                  <Badge variant="outline" className="text-xs">{service.serviceType || 'Unknown'}</Badge>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Status</span>
-                  <Badge className={getStatusColor(service.status)}>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Status</span>
+                  <Badge className={`${getStatusColor(service.status)} text-xs`}>
                     {getStatusIcon(service.status)}
                     <span className="ml-1">{service.status || 'Unknown'}</span>
                   </Badge>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Priority</span>
-                  <Badge className={getPriorityColor(service.priority)}>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Priority</span>
+                  <Badge className={`${getPriorityColor(service.priority)} text-xs`}>
                     {service.priority || 'Unknown'}
                   </Badge>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Total Cost</span>
-                  <span className="text-sm font-medium">{service.totalCost ? formatCurrency(service.totalCost) : 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Total Cost</span>
+                  <span className="text-xs sm:text-sm font-medium text-right">
+                    {service.totalCost ? formatCurrency(service.totalCost) : 'N/A'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Created</span>
-                  <span className="text-sm font-medium">{service.createdAt ? formatDate(service.createdAt) : 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Created</span>
+                  <span className="text-xs sm:text-sm font-medium text-right">
+                    {service.createdAt ? formatDate(service.createdAt) : 'N/A'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Updated</span>
-                  <span className="text-sm font-medium">{service.updatedAt ? formatDate(service.updatedAt) : 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Updated</span>
+                  <span className="text-xs sm:text-sm font-medium text-right">
+                    {service.updatedAt ? formatDate(service.updatedAt) : 'N/A'}
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-muted-foreground">Updated By</span>
-                  <span className="text-sm font-medium">{service.updatedBy || 'N/A'}</span>
+                <div className="flex justify-between items-start gap-2">
+                  <span className="text-xs sm:text-sm text-muted-foreground">Updated By</span>
+                  <span className="text-xs sm:text-sm font-medium text-right break-all">{service.updatedBy || 'N/A'}</span>
                 </div>
               </CardContent>
             </Card>
 
             {/* Processing Status */}
             <Card>
-              <CardHeader>
-                <CardTitle>Processing Status</CardTitle>
+              <CardHeader className="pb-3 sm:pb-4">
+                <CardTitle className="text-lg sm:text-xl">Processing Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">AI Confidence</span>
-                    <span className="text-sm font-medium">
-                      {service.invoice?.aiConfidence ? `${Math.round(service.invoice.aiConfidence * 100)}%` : 'N/A'}
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">AI Confidence</span>
+                    <span className="text-xs sm:text-sm font-medium">
+                      {service.invoice?.aiConfidence
+                        ? `${Math.round(service.invoice.aiConfidence * 100)}%`
+                        : 'N/A'}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Data Verified</span>
-                    <Badge variant={service.isDataVerified ? 'default' : 'secondary'}>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Data Verified</span>
+                    <Badge variant={service.isDataVerified ? 'default' : 'secondary'} className="text-xs">
                       {service.isDataVerified ? 'Yes' : 'No'}
                     </Badge>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Manual Review</span>
-                    <Badge variant={service.requiresManualReview ? 'destructive' : 'secondary'}>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs sm:text-sm text-muted-foreground">Manual Review</span>
+                    <Badge variant={service.requiresManualReview ? 'destructive' : 'secondary'} className="text-xs">
                       {service.requiresManualReview ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
                   {service.invoice?.processingMetrics?.totalTime && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Processing Time</span>
-                      <span className="text-sm font-medium">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-xs sm:text-sm text-muted-foreground">Processing Time</span>
+                      <span className="text-xs sm:text-sm font-medium">
                         {service.invoice.processingMetrics.totalTime.toFixed(2)}s
                       </span>
                     </div>

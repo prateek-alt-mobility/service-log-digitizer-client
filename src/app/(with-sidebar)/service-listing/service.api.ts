@@ -1,5 +1,6 @@
 import api from '@/store/api';
 import { BaseResponse } from '@/types';
+import { fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // Types for the API response
 interface InvoiceData {
@@ -113,9 +114,39 @@ export interface ServiceSearchParams {
   serviceType?: string;
 }
 
-enum SERVICE_API_ENDPOINTS {
-  GET_SERVICES = '/services',
+// Export response interface
+export interface ExportResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data: {
+    success: boolean;
+    message: string;
+    url: string;
+    filename: string;
+    contentType: string;
+    generatedAt: string;
+    fromCache: boolean;
+    regenerated: boolean;
+  };
 }
+
+enum SERVICE_API_ENDPOINTS {
+  GET_SERVICES = '/services?pageSize=100',
+  EXPORT_SERVICE = '/services',
+}
+
+// Create a custom base query for the export service with the specific URL
+const exportServiceBaseQuery = fetchBaseQuery({
+  baseUrl: 'https://estonia-hurricane-soa-renewable.trycloudflare.com',
+  prepareHeaders: (headers) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
 
 const serviceApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -146,7 +177,26 @@ const serviceApi = api.injectEndpoints({
           : SERVICE_API_ENDPOINTS.GET_SERVICES;
       },
     }),
+    exportService: builder.mutation<ExportResponse, { id: string; format: 'pdf' | 'excel' }>({
+      queryFn: async ({ id, format }, api) => {
+        try {
+          const result = await exportServiceBaseQuery(
+            `${SERVICE_API_ENDPOINTS.EXPORT_SERVICE}/${id}/export?format=${format}`,
+            api,
+            {}
+          );
+          
+          if (result.error) {
+            return { error: result.error };
+          }
+          
+          return { data: result.data as ExportResponse };
+        } catch (error) {
+          return { error: { status: 'FETCH_ERROR', error: String(error) } };
+        }
+      },
+    }),
   }),
 });
 
-export const { useGetServicesQuery } = serviceApi;
+export const { useGetServicesQuery, useExportServiceMutation } = serviceApi;
