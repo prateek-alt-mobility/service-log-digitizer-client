@@ -40,7 +40,19 @@ type UploadFileResponse = BaseResponse<{
   contentType: string;
 }>;
 type CreateServiceResponse = BaseResponse<{
-  message: string;
+  createdAt: string;
+  description: string;
+  id: string;
+  isDataVerified: false;
+  priority: string;
+  refNo: string;
+  regNo: string;
+  requiresManualReview: boolean;
+  serviceNo: string;
+  serviceType: string;
+  status: string;
+  totalCost: number;
+  updatedAt: string;
 }>;
 type CreateServicePayload = {
   fileUrl: string;
@@ -51,10 +63,63 @@ type CreateServicePayload = {
   priority?: string;
   description?: string;
 };
+
+interface VehicleInfo {
+  vin: string;
+  registrationNumber: string;
+  make: string;
+  model: string;
+  year: number;
+  mileage: number | null;
+}
+
+interface ServiceItem {
+  type: string;
+  description: string;
+  cost: number;
+  laborHours: number | null;
+}
+
+interface PartItem {
+  name: string;
+  partNumber: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+interface CostBreakdown {
+  subtotal: number;
+  laborCost: number;
+  partsCost: number;
+  taxAmount: number | null;
+  totalCost: number;
+}
+
+interface ExtractedInvoiceData {
+  serviceDate: string;
+  invoiceNumber: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: null;
+  vehicleInfo: VehicleInfo;
+  services: ServiceItem[];
+  parts: PartItem[];
+  costs: CostBreakdown;
+}
+
+type TriggerAIParsingResponse = BaseResponse<{
+  serviceId: string;
+  extractedData: ExtractedInvoiceData;
+  confidence: number;
+  processingTime: number;
+  requiresManualReview: boolean;
+}>;
 enum INVOICE_API_ENDPOINTS {
   GET_DROPDOWN_VEHICLES = '/vehicle?page=1&pageSize=1000',
   UPLOAD_FILE = '/files/pdf-upload',
-  CREATE_SERVICE = 'services/upload',
+  CREATE_SERVICE = '/services/upload',
+  TRIGGER_AI_PARSING = '/services/:id/process',
 }
 export const addInvoiceApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -76,8 +141,18 @@ export const addInvoiceApi = api.injectEndpoints({
         body: data,
       }),
     }),
+    triggerAIParsing: builder.mutation<TriggerAIParsingResponse, string>({
+      query: (serviceId) => ({
+        url: INVOICE_API_ENDPOINTS.TRIGGER_AI_PARSING.replace(':id', serviceId),
+        method: 'POST',
+      }),
+    }),
   }),
 });
 
-export const { useGetDropdownVehiclesQuery, useUploadFileMutation, useCreateServiceMutation } =
-  addInvoiceApi;
+export const {
+  useGetDropdownVehiclesQuery,
+  useUploadFileMutation,
+  useCreateServiceMutation,
+  useTriggerAIParsingMutation,
+} = addInvoiceApi;
