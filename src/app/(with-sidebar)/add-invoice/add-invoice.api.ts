@@ -71,6 +71,7 @@ interface VehicleInfo {
   model: string;
   year: number;
   mileage: number | null;
+  licensePlate: string;
 }
 
 interface ServiceItem {
@@ -113,7 +114,7 @@ interface ExtractedInvoiceData {
   parts: PartItem[];
   costs: CostBreakdown;
 }
-type ExtractedData = {
+export type ExtractedData = {
   serviceDate: string;
   invoiceNumber: string;
   shopName: string;
@@ -201,4 +202,5 @@ export const {
   useUploadFileMutation,
   useCreateServiceMutation,
   useTriggerAIParsingMutation,
+  useSubmitServiceMutation,
 } = addInvoiceApi;
