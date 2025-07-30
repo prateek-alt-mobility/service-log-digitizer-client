@@ -13,26 +13,60 @@ interface InvoiceData {
   processingError?: string;
   uploadedAt: string;
   processingMetrics: {
+    parsingTime: number;
+    totalTime: number;
     _id: string;
   };
+  processedAt: string;
+}
+
+interface VehicleInfo {
+  vin: string;
+  registrationNumber: string;
+  make: string;
+  model: string;
+  year: number | null;
+  mileage: number;
+  _id: string;
+}
+
+interface ServiceDetail {
+  type: string;
+  description: string;
+  cost: number;
+  laborHours: number | null;
+}
+
+interface PartItem {
+  name: string;
+  partNumber: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+interface Costs {
+  subtotal: number;
+  laborCost: number;
+  partsCost: number;
+  taxAmount: number;
+  totalCost: number;
+  _id: string;
 }
 
 interface ExtractedData {
+  serviceDate: string;
   invoiceNumber: string;
-  shopName: string;
-  shopAddress: string;
-  shopPhone: string;
-  vehicleInfo: {
-    _id: string;
-  };
-  costs: {
-    _id: string;
-  };
+  shopName: string | null;
+  shopAddress: string | null;
+  shopPhone: string | null;
+  vehicleInfo: VehicleInfo;
+  services: ServiceDetail[];
+  parts: PartItem[];
+  costs: Costs;
   warranty: {
     _id: string;
   };
-  services: any[];
-  parts: any[];
 }
 
 export interface ServiceItem {
@@ -58,6 +92,7 @@ export interface ServiceItem {
   updatedAt: string;
   updatedBy: string;
   __v: number;
+  serviceDate: string;
 }
 
 type ServicesResponse = BaseResponse<{
