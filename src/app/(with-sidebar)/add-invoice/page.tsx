@@ -20,55 +20,169 @@ import {
   useCreateServiceMutation,
   useGetDropdownVehiclesQuery,
   useUploadFileMutation,
+  useTriggerAIParsingMutation,
 } from './add-invoice.api';
-import { AIProcessingReview } from './components/ai-processing-review';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Loader2,
+  FileText,
+  ScanSearch,
+  ListChecks,
+  Wrench,
+  ShoppingCart,
+  Calculator,
+  CheckCircle,
+  Bot,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-// Mock extracted data - in real implementation, this would come from the AI processing
-const mockExtractedData = {
-  serviceDate: '2024-01-15',
-  invoiceNumber: 'INV-2024-001',
-  shopName: 'AutoCare Center',
-  shopAddress: '123 Main Street, City, State 12345',
-  shopPhone: '+1-555-0123',
-  vehicleInfo: {
-    vin: '1HGBH41JXMN109186',
-    registrationNumber: 'ABC123',
-    make: 'Honda',
-    model: 'Civic',
-    year: 2020,
-    mileage: 50000,
-  },
-  services: [
+const bypass = false;
+
+// Custom keyframes animation for subtle bounce
+const bounceAnimation = {
+  '0%, 100%': { transform: 'translateY(0)' },
+  '50%': { transform: 'translateY(-10%)' },
+};
+
+const AIParsingLoader = () => {
+  const [currentStage, setCurrentStage] = useState(0);
+  const [progressWidth, setProgressWidth] = useState(12.5); // Start with first stage width
+
+  const stages = [
     {
-      type: 'OIL_CHANGE',
-      description: 'Full synthetic oil change with filter replacement',
-      cost: 75.0,
-      laborHours: 1.0,
-    },
-  ],
-  parts: [
-    {
-      name: 'Synthetic Oil 5W-30',
-      partNumber: 'SYN-5W30-5QT',
-      quantity: 1,
-      unitCost: 45.0,
-      totalCost: 45.0,
+      text: 'Initializing AI parsing engine',
+      icon: Bot,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500',
     },
     {
-      name: 'Oil Filter',
-      partNumber: 'OF-HONDA-2020',
-      quantity: 1,
-      unitCost: 15.0,
-      totalCost: 15.0,
+      text: 'Scanning invoice document',
+      icon: ScanSearch,
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-500',
     },
-  ],
-  costs: {
-    subtotal: 135.0,
-    laborCost: 75.0,
-    partsCost: 60.0,
-    taxAmount: 10.8,
-    totalCost: 145.8,
-  },
+    {
+      text: 'Extracting line items',
+      icon: ListChecks,
+      color: 'text-violet-500',
+      bgColor: 'bg-violet-500',
+    },
+    {
+      text: 'Identifying service details',
+      icon: Wrench,
+      color: 'text-purple-500',
+      bgColor: 'bg-purple-500',
+    },
+    {
+      text: 'Detecting parts information',
+      icon: ShoppingCart,
+      color: 'text-pink-500',
+      bgColor: 'bg-pink-500',
+    },
+    {
+      text: 'Calculating cost breakdown',
+      icon: Calculator,
+      color: 'text-rose-500',
+      bgColor: 'bg-rose-500',
+    },
+    {
+      text: 'Verifying extracted data',
+      icon: FileText,
+      color: 'text-orange-500',
+      bgColor: 'bg-orange-500',
+    },
+    {
+      text: 'Finalizing results',
+      icon: CheckCircle,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500',
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentStage((prevStage) => {
+        const nextStage = (prevStage + 1) % stages.length;
+        // Update progress width based on the next stage
+        setProgressWidth(((nextStage + 1) * 100) / stages.length);
+        return nextStage;
+      });
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [stages.length]);
+
+  const CurrentIcon = stages[currentStage].icon;
+
+  return (
+    <Card className="w-full max-w-md mx-auto mt-10 overflow-hidden">
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center justify-center space-y-6">
+          <div className="relative h-20 w-20">
+            {/* Spinning background loader */}
+            <Loader2 className="h-20 w-20 absolute inset-0 animate-spin text-muted-foreground opacity-30" />
+
+            {/* Animated icon transition */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <CurrentIcon
+                className={cn(
+                  'h-10 w-10 transition-all duration-500 ease-in-out',
+                  stages[currentStage].color,
+                )}
+                style={{ animation: 'bounce 2s infinite ease-in-out' }}
+              />
+            </div>
+          </div>
+
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-medium">Processing Invoice</h3>
+            <p
+              className={cn(
+                'text-sm transition-all duration-500 ease-in-out',
+                stages[currentStage].color,
+              )}
+            >
+              {stages[currentStage].text}...
+            </p>
+          </div>
+
+          <div className="w-full space-y-2">
+            <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  'h-2 rounded-full transition-all duration-1000 ease-in-out',
+                  stages[currentStage].bgColor,
+                )}
+                style={{
+                  width: `${progressWidth}%`,
+                }}
+              ></div>
+            </div>
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>
+                Step {currentStage + 1}/{stages.length}
+              </span>
+              <span>{Math.round(progressWidth)}% complete</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-muted-foreground animate-pulse">This may take a few moments</p>
+        </div>
+      </CardContent>
+
+      <style jsx global>{`
+        @keyframes bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10%);
+          }
+        }
+      `}</style>
+    </Card>
+  );
 };
 
 const AddInvoicePage = () => {
@@ -87,15 +201,12 @@ const AddInvoicePage = () => {
       value: 'GENERAL',
     },
   ]);
-  const [isAIProcessing, setIsAIProcessing] = useState(false);
-  const [showAIReview, setShowAIReview] = useState(false);
-  const [currentServiceId, setCurrentServiceId] = useState<string>('');
-  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('');
-  const [currentFormData, setCurrentFormData] = useState<any>(null);
+  // const [isAIProcessing, setIsAIProcessing] = useState(false);
 
   const [uploadFile] = useUploadFileMutation();
   const [createService] = useCreateServiceMutation();
-
+  const [isAIParsing, setIsAIParsing] = useState(false);
+  const [triggerAIParsing, { isError: isAIParsingError }] = useTriggerAIParsingMutation();
   const uploadInvoiceValidationSchema = z.object({
     regNo: z.string().min(1, 'Registration number is required'),
     serviceType: z.string().min(1, 'Service type is required'),
@@ -122,50 +233,30 @@ const AddInvoicePage = () => {
       const formData = new FormData();
       formData.append('file', data.invoicePdf[0]);
       const response = await uploadFile(formData).unwrap();
+      // Step 1: Upload the invoice PDF to the server
       const invoicePdfUrl = response.data.link;
 
+      // Step 2: Create the service
+      setIsAIParsing(true);
       const addInvoiceResponse = await createService({
         fileUrl: invoicePdfUrl,
         fileName: data.invoicePdf[0].name,
-        regNo: data.regNo,
         refNo: data.regNo + ' - ' + data.serviceType,
+        regNo: data.regNo,
         serviceType: data.serviceType,
         description: data.description || '',
       });
 
-      setIsAIProcessing(true);
-      await new Promise((resolve) => setTimeout(resolve, 10000));
-      setIsAIProcessing(false);
-
+      // Step 3: Trigger the AI parsing
+      const serviceId = addInvoiceResponse.data?.data.id;
+      if (!serviceId) throw new Error('Service ID is required');
+      await triggerAIParsing(serviceId).unwrap();
+      setIsAIParsing(false);
       if (addInvoiceResponse.error) throw new Error('Error adding invoice');
-
-      // Store the data for AI review
-      setCurrentServiceId('mock-service-id-' + Date.now()); // In real implementation, this would come from the API response
-      setCurrentPdfUrl(invoicePdfUrl);
-      setCurrentFormData(data);
-      setShowAIReview(true);
-
-      toast.success('Invoice uploaded successfully. Please review the extracted data.');
+      toast.success('Invoice added successfully');
     } catch (error) {
       toast.error('Error uploading invoice');
     }
-  };
-
-  const handleAIReviewSuccess = () => {
-    setShowAIReview(false);
-    setCurrentServiceId('');
-    setCurrentPdfUrl('');
-    setCurrentFormData(null);
-    form.reset();
-    toast.success('Service submitted successfully!');
-  };
-
-  const handleAIReviewReject = () => {
-    setShowAIReview(false);
-    setCurrentServiceId('');
-    setCurrentPdfUrl('');
-    setCurrentFormData(null);
-    toast.info('Service rejected. You can upload a new invoice.');
   };
 
   const { data: dropdownVehicleData } = useGetDropdownVehiclesQuery();
@@ -181,131 +272,88 @@ const AddInvoicePage = () => {
     }
   }, [vehicles]);
 
-  if (showAIReview && currentFormData) {
-    return (
-      <div className="h-full">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Review Extracted Data</h1>
-          <p className="text-muted-foreground">
-            Review and edit the extracted invoice data before submitting.
-          </p>
-        </div>
-
-        <div className="h-[calc(100vh-200px)]">
-          <AIProcessingReview
-            extractedData={mockExtractedData}
-            pdfUrl={currentPdfUrl}
-            serviceId={currentServiceId}
-            refNo={currentFormData.regNo + ' - ' + currentFormData.serviceType}
-            regNo={currentFormData.regNo}
-            serviceType={currentFormData.serviceType}
-            priority="MEDIUM"
-            description={currentFormData.description}
-            onSuccess={handleAIReviewSuccess}
-            onReject={handleAIReviewReject}
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
-      {isAIProcessing ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-lg font-medium">Processing invoice...</p>
-            <p className="text-sm text-muted-foreground">AI is extracting data from your invoice</p>
-          </div>
-        </div>
+      {isAIParsing && !isAIParsingError ? (
+        <AIParsingLoader />
       ) : (
-        <div>
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold mb-2">Add Invoice</h1>
-            <p className="text-muted-foreground">
-              Upload an invoice PDF to extract service information automatically.
-            </p>
-          </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="regNo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Registration Number</FormLabel>
-                    <FormControl>
-                      <FormGlobalSelect
-                        name="regNo"
-                        control={form.control}
-                        options={vehicleOptions}
-                        placeholder="Select a vehicle"
-                        className="w-full"
-                        required
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="serviceType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Service Type</FormLabel>
-                    <FormControl>
-                      <FormGlobalSelect
-                        name="serviceType"
-                        control={form.control}
-                        options={serviceTypeOptions}
-                        placeholder="Select a service type"
-                        className="w-full"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="invoicePdf"
-                render={({ field: { onChange, value, ...fieldProps } }) => (
-                  <FormItem>
-                    <FormLabel>Invoice PDF</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(e) => onChange(e.target.files)}
-                        {...fieldProps}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full">
-                Upload Invoice
-              </Button>
-            </form>
-          </Form>
-        </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="regNo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Registration Number</FormLabel>
+                  <FormControl>
+                    <FormGlobalSelect
+                      name="regNo"
+                      control={form.control}
+                      options={vehicleOptions}
+                      placeholder="Select a vehicle"
+                      className="w-full"
+                      required
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="serviceType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Service Type</FormLabel>
+                  <FormControl>
+                    <FormGlobalSelect
+                      name="serviceType"
+                      control={form.control}
+                      options={serviceTypeOptions}
+                      placeholder="Select a service type"
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="invoicePdf"
+              render={({ field: { onChange, value, ...fieldProps } }) => (
+                <FormItem>
+                  <FormLabel>Invoice PDF</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => onChange(e.target.files)}
+                      {...fieldProps}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="w-full">
+              Upload Invoice
+            </Button>
+          </form>
+        </Form>
       )}
     </div>
   );

@@ -40,7 +40,19 @@ type UploadFileResponse = BaseResponse<{
   contentType: string;
 }>;
 type CreateServiceResponse = BaseResponse<{
-  message: string;
+  createdAt: string;
+  description: string;
+  id: string;
+  isDataVerified: false;
+  priority: string;
+  refNo: string;
+  regNo: string;
+  requiresManualReview: boolean;
+  serviceNo: string;
+  serviceType: string;
+  status: string;
+  totalCost: number;
+  updatedAt: string;
 }>;
 type CreateServicePayload = {
   fileUrl: string;
@@ -52,54 +64,57 @@ type CreateServicePayload = {
   description?: string;
 };
 
-// New types for submit service
-type SubmitServiceResponse = BaseResponse<{
-  message: string;
-  serviceId: string;
-}>;
-
-type VehicleInfo = {
+interface VehicleInfo {
   vin: string;
-  licensePlate: string;
   registrationNumber: string;
   make: string;
   model: string;
   year: number;
-  mileage: number;
-};
+  mileage: number | null;
+  licensePlate: string;
+}
 
-type ServiceItem = {
+interface ServiceItem {
   type: string;
   description: string;
   cost: number;
-  laborHours: number;
-};
+  laborHours: number | null;
+}
 
-type PartItem = {
+interface PartItem {
   name: string;
   partNumber: string;
   quantity: number;
   unitCost: number;
   totalCost: number;
-  catalogMatch?: Record<string, any>;
-  matchConfidence?: number;
-};
+}
 
-type Costs = {
+interface CostBreakdown {
   subtotal: number;
   laborCost: number;
   partsCost: number;
-  taxAmount: number;
+  taxAmount: number | null;
   totalCost: number;
-};
+}
 
-type Warranty = {
+interface Warranty {
   parts: string;
   labor: string;
   description: string;
-};
+}
 
-type ExtractedData = {
+interface ExtractedInvoiceData {
+  serviceDate: string;
+  invoiceNumber: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: null;
+  vehicleInfo: VehicleInfo;
+  services: ServiceItem[];
+  parts: PartItem[];
+  costs: CostBreakdown;
+}
+export type ExtractedData = {
   serviceDate: string;
   invoiceNumber: string;
   shopName: string;
@@ -108,7 +123,7 @@ type ExtractedData = {
   vehicleInfo: VehicleInfo;
   services: ServiceItem[];
   parts: PartItem[];
-  costs: Costs;
+  costs: CostBreakdown;
   warranty: Warranty;
 };
 
@@ -125,13 +140,24 @@ type SubmitServicePayload = {
   isDataVerified: boolean;
 };
 
+type TriggerAIParsingResponse = BaseResponse<{
+  serviceId: string;
+  extractedData: ExtractedInvoiceData;
+  confidence: number;
+  processingTime: number;
+  requiresManualReview: boolean;
+}>;
+type SubmitServiceResponse = BaseResponse<{
+  message: string;
+  serviceId: string;
+}>;
 enum INVOICE_API_ENDPOINTS {
   GET_DROPDOWN_VEHICLES = '/vehicle?page=1&pageSize=1000',
   UPLOAD_FILE = '/files/pdf-upload',
-  CREATE_SERVICE = 'services/upload',
+  CREATE_SERVICE = '/services/upload',
+  TRIGGER_AI_PARSING = '/services/:id/process',
   SUBMIT_SERVICE = 'services/{id}/submit',
 }
-
 export const addInvoiceApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getDropdownVehicles: builder.query<GetDropdownVehiclesResponse, void>({
@@ -152,6 +178,12 @@ export const addInvoiceApi = api.injectEndpoints({
         body: data,
       }),
     }),
+    triggerAIParsing: builder.mutation<TriggerAIParsingResponse, string>({
+      query: (serviceId) => ({
+        url: INVOICE_API_ENDPOINTS.TRIGGER_AI_PARSING.replace(':id', serviceId),
+        method: 'POST',
+      }),
+    }),
     submitService: builder.mutation<
       SubmitServiceResponse,
       { id: string; data: SubmitServicePayload }
@@ -169,16 +201,6 @@ export const {
   useGetDropdownVehiclesQuery,
   useUploadFileMutation,
   useCreateServiceMutation,
+  useTriggerAIParsingMutation,
   useSubmitServiceMutation,
 } = addInvoiceApi;
-
-// Export types for use in components
-export type {
-  SubmitServicePayload,
-  ExtractedData,
-  VehicleInfo,
-  ServiceItem,
-  PartItem,
-  Costs,
-  Warranty,
-};
