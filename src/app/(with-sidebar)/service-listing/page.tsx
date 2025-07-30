@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, User, Building, ArrowRight, Loader2, Download } from 'lucide-react';
+import { FileText, Calendar, User, Plus, ArrowRight, Loader2, Download } from 'lucide-react';
 import { PDFPreview } from '@/components/ui/pdf-preview';
 import { useGetServicesQuery } from './service.api';
 import { ServiceItem } from './service.api';
+import Link from 'next/link';
 
 function ServiceCard({ service }: { service: ServiceItem }) {
   const router = useRouter();
@@ -277,7 +278,7 @@ export default function ServiceListing() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8">
@@ -349,6 +350,11 @@ export default function ServiceListing() {
           </div>
         )}
       </div>
+      <Button className="fixed bottom-8 right-8 h-16 w-16 rounded-full bg-primary text-white">
+        <Link href="/add-invoice">
+          <Plus className="h-10 w-10" />
+        </Link>
+      </Button>
     </div>
   );
 }
