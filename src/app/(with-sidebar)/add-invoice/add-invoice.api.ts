@@ -63,93 +63,6 @@ type CreateServicePayload = {
   priority?: string;
   description?: string;
 };
-
-interface VehicleInfo {
-  vin: string;
-  registrationNumber: string;
-  make: string;
-  model: string;
-  year: number;
-  mileage: number | null;
-}
-
-interface ServiceItem {
-  type: string;
-  description: string;
-  cost: number;
-  laborHours: number | null;
-}
-
-interface PartItem {
-  name: string;
-  partNumber: string;
-  quantity: number;
-  unitCost: number;
-  totalCost: number;
-}
-
-interface CostBreakdown {
-  subtotal: number;
-  laborCost: number;
-  partsCost: number;
-  taxAmount: number | null;
-  totalCost: number;
-}
-
-interface Warranty {
-  parts: string;
-  labor: string;
-  description: string;
-}
-
-interface ExtractedInvoiceData {
-  serviceDate: string;
-  invoiceNumber: string;
-  shopName: string;
-  shopAddress: string;
-  shopPhone: null;
-  vehicleInfo: VehicleInfo;
-  services: ServiceItem[];
-  parts: PartItem[];
-  costs: CostBreakdown;
-}
-type ExtractedData = {
-  serviceDate: string;
-  invoiceNumber: string;
-  shopName: string;
-  shopAddress: string;
-  shopPhone: string;
-  vehicleInfo: VehicleInfo;
-  services: ServiceItem[];
-  parts: PartItem[];
-  costs: CostBreakdown;
-  warranty: Warranty;
-};
-
-type SubmitServicePayload = {
-  refNo: string;
-  regNo: string;
-  serviceType: string;
-  priority?: string;
-  description?: string;
-  extractedData: ExtractedData;
-  additionalAttachments?: string[];
-  serviceDate: string;
-  totalCost: number;
-  isDataVerified: boolean;
-};
-
-type TriggerAIParsingResponse = BaseResponse<{
-  serviceId: string;
-  extractedData: ExtractedInvoiceData;
-  confidence: number;
-  processingTime: number;
-  requiresManualReview: boolean;
-}>;
-type SubmitServiceResponse = BaseResponse<{
-  message: string;
-  serviceId: string;
-}>;
 enum INVOICE_API_ENDPOINTS {
   GET_DROPDOWN_VEHICLES = '/vehicle?page=1&pageSize=1000',
   UPLOAD_FILE = '/files/pdf-upload',
@@ -196,9 +109,5 @@ export const addInvoiceApi = api.injectEndpoints({
   }),
 });
 
-export const {
-  useGetDropdownVehiclesQuery,
-  useUploadFileMutation,
-  useCreateServiceMutation,
-  useTriggerAIParsingMutation,
-} = addInvoiceApi;
+export const { useGetDropdownVehiclesQuery, useUploadFileMutation, useCreateServiceMutation } =
+  addInvoiceApi;
