@@ -96,6 +96,12 @@ interface CostBreakdown {
   totalCost: number;
 }
 
+interface Warranty {
+  parts: string;
+  labor: string;
+  description: string;
+}
+
 interface ExtractedInvoiceData {
   serviceDate: string;
   invoiceNumber: string;
@@ -107,6 +113,31 @@ interface ExtractedInvoiceData {
   parts: PartItem[];
   costs: CostBreakdown;
 }
+type ExtractedData = {
+  serviceDate: string;
+  invoiceNumber: string;
+  shopName: string;
+  shopAddress: string;
+  shopPhone: string;
+  vehicleInfo: VehicleInfo;
+  services: ServiceItem[];
+  parts: PartItem[];
+  costs: CostBreakdown;
+  warranty: Warranty;
+};
+
+type SubmitServicePayload = {
+  refNo: string;
+  regNo: string;
+  serviceType: string;
+  priority?: string;
+  description?: string;
+  extractedData: ExtractedData;
+  additionalAttachments?: string[];
+  serviceDate: string;
+  totalCost: number;
+  isDataVerified: boolean;
+};
 
 type TriggerAIParsingResponse = BaseResponse<{
   serviceId: string;
@@ -115,11 +146,16 @@ type TriggerAIParsingResponse = BaseResponse<{
   processingTime: number;
   requiresManualReview: boolean;
 }>;
+type SubmitServiceResponse = BaseResponse<{
+  message: string;
+  serviceId: string;
+}>;
 enum INVOICE_API_ENDPOINTS {
   GET_DROPDOWN_VEHICLES = '/vehicle?page=1&pageSize=1000',
   UPLOAD_FILE = '/files/pdf-upload',
   CREATE_SERVICE = '/services/upload',
   TRIGGER_AI_PARSING = '/services/:id/process',
+  SUBMIT_SERVICE = 'services/{id}/submit',
 }
 export const addInvoiceApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -145,6 +181,16 @@ export const addInvoiceApi = api.injectEndpoints({
       query: (serviceId) => ({
         url: INVOICE_API_ENDPOINTS.TRIGGER_AI_PARSING.replace(':id', serviceId),
         method: 'POST',
+      }),
+    }),
+    submitService: builder.mutation<
+      SubmitServiceResponse,
+      { id: string; data: SubmitServicePayload }
+    >({
+      query: ({ id, data }) => ({
+        url: INVOICE_API_ENDPOINTS.SUBMIT_SERVICE.replace('{id}', id),
+        method: 'POST',
+        body: data,
       }),
     }),
   }),
