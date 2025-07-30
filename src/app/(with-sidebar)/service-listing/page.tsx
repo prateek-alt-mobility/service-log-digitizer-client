@@ -56,7 +56,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -66,7 +66,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
   };
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-[1.02] border-border hover:border-primary/20"
       onClick={handleCardClick}
     >
@@ -76,7 +76,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
             <CardTitle className="text-lg font-semibold text-card-foreground mb-2">
               {service.serviceNo}
             </CardTitle>
-            
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <User className="h-4 w-4" />
               <span>{service.createdBy}</span>
@@ -84,7 +84,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <div className="flex gap-4">
           {/* PDF Preview Section */}
@@ -96,7 +96,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
               showActions={false}
             />
           </div>
-          
+
           {/* Content Section */}
           <div className="flex-1 flex flex-col justify-between">
             <div>
@@ -116,11 +116,11 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                 </Badge>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-end mt-3">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 className="text-primary hover:text-primary/80"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -141,18 +141,19 @@ function ServiceCard({ service }: { service: ServiceItem }) {
 export default function ServiceListing() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
-  
+
   // Use Redux Toolkit Query hook
   const { data: apiResponse, isLoading, error, refetch } = useGetServicesQuery();
 
   const services = apiResponse?.data?.data || [];
-  const statuses = ['All', ...Array.from(new Set(services.map(service => service.status)))];
+  const statuses = ['All', ...Array.from(new Set(services.map((service) => service.status)))];
 
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.serviceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.refNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.createdBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.description.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredServices = services.filter((service) => {
+    const matchesSearch =
+      service.serviceNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.refNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.createdBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'All' || service.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -174,13 +175,15 @@ export default function ServiceListing() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Error Loading Services</h1>
           <p className="text-muted-foreground mb-4">
-            {error && 'data' in error && typeof error.data === 'object' && error.data && 'message' in error.data 
-              ? String(error.data.message) 
+            {error &&
+            'data' in error &&
+            typeof error.data === 'object' &&
+            error.data &&
+            'message' in error.data
+              ? String(error.data.message)
               : 'Failed to fetch services'}
           </p>
-          <Button onClick={() => refetch()}>
-            Try Again
-          </Button>
+          <Button onClick={() => refetch()}>Try Again</Button>
         </div>
       </div>
     );
@@ -212,7 +215,7 @@ export default function ServiceListing() {
             {statuses.map((status) => (
               <Button
                 key={status}
-                variant={selectedStatus === status ? "default" : "outline"}
+                variant={selectedStatus === status ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setSelectedStatus(status)}
                 className="text-xs"
@@ -241,12 +244,10 @@ export default function ServiceListing() {
           <div className="text-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-medium text-foreground mb-2">No services found</h3>
-            <p className="text-muted-foreground">
-              Try adjusting your search terms or filters
-            </p>
+            <p className="text-muted-foreground">Try adjusting your search terms or filters</p>
           </div>
         )}
       </div>
     </div>
   );
-} 
+}

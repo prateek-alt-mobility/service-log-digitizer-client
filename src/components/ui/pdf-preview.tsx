@@ -12,12 +12,12 @@ interface PDFPreviewProps {
   className?: string;
 }
 
-export function PDFPreview({ 
-  fileUrl, 
-  fileName, 
-  size = 'medium', 
+export function PDFPreview({
+  fileUrl,
+  fileName,
+  size = 'medium',
   showActions = true,
-  className = '' 
+  className = '',
 }: PDFPreviewProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -25,7 +25,7 @@ export function PDFPreview({
   const sizeClasses = {
     small: 'w-32 h-40',
     medium: 'w-full h-96',
-    large: 'w-full h-[600px]'
+    large: 'w-full h-[600px]',
   };
 
   const handleIframeLoad = () => {
@@ -45,7 +45,9 @@ export function PDFPreview({
 
   if (!fileUrl) {
     return (
-      <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg flex flex-col items-center justify-center p-3 ${className}`}>
+      <div
+        className={`${sizeClasses[size]} bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg flex flex-col items-center justify-center p-3 ${className}`}
+      >
         <FileText className="h-8 w-8 text-primary mb-2" />
         <div className="text-center">
           <div className="text-xs font-medium text-primary">No PDF</div>
@@ -56,14 +58,16 @@ export function PDFPreview({
   }
 
   return (
-    <div className={`${sizeClasses[size]} bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg overflow-hidden ${className}`}>
+    <div
+      className={`${sizeClasses[size]} bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-lg overflow-hidden ${className}`}
+    >
       {isLoading && (
         <div className="w-full h-full flex flex-col items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
           <div className="text-xs text-muted-foreground">Loading PDF...</div>
         </div>
       )}
-      
+
       {hasError && (
         <div className="w-full h-full flex flex-col items-center justify-center p-4">
           <FileText className="h-12 w-12 text-primary mb-3" />
@@ -94,12 +98,12 @@ export function PDFPreview({
             onError={handleIframeError}
             style={{ display: isLoading ? 'none' : 'block' }}
           />
-          
+
           {showActions && !isLoading && !hasError && (
             <div className="absolute top-2 right-2 flex gap-1">
-              <Button 
-                size="sm" 
-                variant="secondary" 
+              <Button
+                size="sm"
+                variant="secondary"
                 className="h-6 w-6 p-0"
                 onClick={openPDF}
                 title="Open PDF in new tab"
@@ -112,4 +116,4 @@ export function PDFPreview({
       )}
     </div>
   );
-} 
+}

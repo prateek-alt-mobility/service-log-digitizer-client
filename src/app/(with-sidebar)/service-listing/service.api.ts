@@ -89,9 +89,9 @@ const serviceApi = api.injectEndpoints({
         if (!params) {
           return SERVICE_API_ENDPOINTS.GET_SERVICES;
         }
-        
+
         const searchParams = new URLSearchParams();
-        
+
         if (params.search) {
           searchParams.append('search', params.search);
         }
@@ -104,12 +104,14 @@ const serviceApi = api.injectEndpoints({
         if (params.serviceType) {
           searchParams.append('serviceType', params.serviceType);
         }
-        
+
         const queryString = searchParams.toString();
-        return queryString ? `${SERVICE_API_ENDPOINTS.GET_SERVICES}?${queryString}` : SERVICE_API_ENDPOINTS.GET_SERVICES;
+        return queryString
+          ? `${SERVICE_API_ENDPOINTS.GET_SERVICES}?${queryString}`
+          : SERVICE_API_ENDPOINTS.GET_SERVICES;
       },
     }),
   }),
 });
 
-export const { useGetServicesQuery } = serviceApi; 
+export const { useGetServicesQuery } = serviceApi;

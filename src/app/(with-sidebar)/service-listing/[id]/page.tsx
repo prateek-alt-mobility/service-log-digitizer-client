@@ -6,14 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { PDFPreview } from '@/components/ui/pdf-preview';
-import { 
-  FileText, 
-  Calendar, 
-  User, 
-  Building, 
-  ArrowLeft, 
-  Download, 
-  Share2, 
+import {
+  FileText,
+  Calendar,
+  User,
+  Building,
+  ArrowLeft,
+  Download,
+  Share2,
   Eye,
   Clock,
   Tag,
@@ -22,7 +22,7 @@ import {
   AlertCircle,
   Clock as ClockIcon,
   Loader2,
-  ExternalLink
+  ExternalLink,
 } from 'lucide-react';
 import { useGetServicesQuery } from '../service.api';
 import { ServiceItem } from '../service.api';
@@ -87,12 +87,12 @@ export default function ServiceDetail() {
   const params = useParams();
   const router = useRouter();
   const serviceId = params.id as string;
-  
+
   // Use Redux Toolkit Query hook
   const { data: apiResponse, isLoading, error } = useGetServicesQuery();
-  
+
   const services = apiResponse?.data?.data || [];
-  const service = services.find(s => s._id === serviceId);
+  const service = services.find((s) => s._id === serviceId);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -100,7 +100,7 @@ export default function ServiceDetail() {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -126,8 +126,12 @@ export default function ServiceDetail() {
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Service Not Found</h1>
           <p className="text-muted-foreground mb-4">
-            {error && 'data' in error && typeof error.data === 'object' && error.data && 'message' in error.data 
-              ? String(error.data.message) 
+            {error &&
+            'data' in error &&
+            typeof error.data === 'object' &&
+            error.data &&
+            'message' in error.data
+              ? String(error.data.message)
               : 'The requested service could not be found.'}
           </p>
           <Button onClick={() => router.push('/service-listing')}>
@@ -144,15 +148,11 @@ export default function ServiceDetail() {
       <div className="max-w-6xl mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => router.push('/service-listing')}
-            className="mb-4"
-          >
+          <Button variant="ghost" onClick={() => router.push('/service-listing')} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Services
           </Button>
-          
+
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -173,8 +173,6 @@ export default function ServiceDetail() {
                 </div>
               </div>
             </div>
-            
-            
           </div>
         </div>
 
@@ -189,29 +187,31 @@ export default function ServiceDetail() {
                   Document Preview
                 </CardTitle>
               </CardHeader>
-                                              <CardContent>
-                  <div className="space-y-4">
-                    {/* Document Info */}
-                    <div className="flex flex-col items-center justify-center mb-4">
-                      <h3 className="text-lg font-semibold text-primary mb-2">
-                        {service.invoice?.fileName || service.serviceNo}
-                      </h3>
-                      <div className="space-y-1 text-sm text-muted-foreground text-center">
-                        <div>Status: {service.invoice?.processingStatus || 'PDF'}</div>
-                        <div>Size: {getFileSize(service.invoice?.fileUrl || '')}</div>
-                        <div>Uploaded: {formatDate(service.invoice?.uploadedAt || service.createdAt)}</div>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Document Info */}
+                  <div className="flex flex-col items-center justify-center mb-4">
+                    <h3 className="text-lg font-semibold text-primary mb-2">
+                      {service.invoice?.fileName || service.serviceNo}
+                    </h3>
+                    <div className="space-y-1 text-sm text-muted-foreground text-center">
+                      <div>Status: {service.invoice?.processingStatus || 'PDF'}</div>
+                      <div>Size: {getFileSize(service.invoice?.fileUrl || '')}</div>
+                      <div>
+                        Uploaded: {formatDate(service.invoice?.uploadedAt || service.createdAt)}
                       </div>
                     </div>
-                    
-                    {/* PDF Preview */}
-                    <PDFPreview
-                      fileUrl={service.invoice?.fileUrl}
-                      fileName={service.invoice?.fileName || service.serviceNo}
-                      size="medium"
-                      showActions={true}
-                    />
                   </div>
-                </CardContent>
+
+                  {/* PDF Preview */}
+                  <PDFPreview
+                    fileUrl={service.invoice?.fileUrl}
+                    fileName={service.invoice?.fileName || service.serviceNo}
+                    size="medium"
+                    showActions={true}
+                  />
+                </div>
+              </CardContent>
             </Card>
 
             {/* Description */}
@@ -236,25 +236,33 @@ export default function ServiceDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {service.extractedData.invoiceNumber && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Invoice Number</label>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Invoice Number
+                        </label>
                         <p className="text-sm">{service.extractedData.invoiceNumber}</p>
                       </div>
                     )}
                     {service.extractedData.shopName && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Shop Name</label>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Shop Name
+                        </label>
                         <p className="text-sm">{service.extractedData.shopName}</p>
                       </div>
                     )}
                     {service.extractedData.shopAddress && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Shop Address</label>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Shop Address
+                        </label>
                         <p className="text-sm">{service.extractedData.shopAddress}</p>
                       </div>
                     )}
                     {service.extractedData.shopPhone && (
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Shop Phone</label>
+                        <label className="text-sm font-medium text-muted-foreground">
+                          Shop Phone
+                        </label>
                         <p className="text-sm">{service.extractedData.shopPhone}</p>
                       </div>
                     )}
@@ -278,7 +286,6 @@ export default function ServiceDetail() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-          
             {/* Service Information */}
             <Card>
               <CardHeader>
@@ -329,18 +336,20 @@ export default function ServiceDetail() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">AI Confidence</span>
-                    <span className="text-sm font-medium">{service.invoice?.aiConfidence || 0}%</span>
+                    <span className="text-sm font-medium">
+                      {service.invoice?.aiConfidence || 0}%
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Data Verified</span>
-                    <Badge variant={service.isDataVerified ? "default" : "secondary"}>
-                      {service.isDataVerified ? "Yes" : "No"}
+                    <Badge variant={service.isDataVerified ? 'default' : 'secondary'}>
+                      {service.isDataVerified ? 'Yes' : 'No'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Manual Review</span>
-                    <Badge variant={service.requiresManualReview ? "destructive" : "secondary"}>
-                      {service.requiresManualReview ? "Required" : "Not Required"}
+                    <Badge variant={service.requiresManualReview ? 'destructive' : 'secondary'}>
+                      {service.requiresManualReview ? 'Required' : 'Not Required'}
                     </Badge>
                   </div>
                 </div>
@@ -351,4 +360,4 @@ export default function ServiceDetail() {
       </div>
     </div>
   );
-} 
+}
