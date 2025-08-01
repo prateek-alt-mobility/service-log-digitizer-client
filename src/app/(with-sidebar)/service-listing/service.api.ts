@@ -136,9 +136,9 @@ enum SERVICE_API_ENDPOINTS {
   EXPORT_SERVICE = '/services',
 }
 
-// Create a custom base query for the export service with the specific URL
+// Create a custom base query for the export service using the same base URL as other APIs
 const exportServiceBaseQuery = fetchBaseQuery({
-  baseUrl: 'https://edward-event-soup-missions.trycloudflare.com',
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE,
   prepareHeaders: (headers) => {
     const token = localStorage.getItem('access_token');
     if (token) {
