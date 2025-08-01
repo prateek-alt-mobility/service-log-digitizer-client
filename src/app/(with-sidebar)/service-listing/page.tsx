@@ -5,7 +5,19 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Calendar, User, Plus, ArrowRight, Loader2, Download } from 'lucide-react';
+import {
+  FileText,
+  Calendar,
+  User,
+  Plus,
+  ArrowRight,
+  Loader2,
+  Download,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Flag,
+} from 'lucide-react';
 import { PDFPreview } from '@/components/ui/pdf-preview';
 import { useGetServicesQuery } from './service.api';
 import { ServiceItem } from './service.api';
@@ -47,6 +59,40 @@ function ServiceCard({ service }: { service: ServiceItem }) {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status.toUpperCase()) {
+      case 'COMPLETED':
+      case 'APPROVED':
+        return <CheckCircle className="h-3 w-3" />;
+      case 'IN_PROGRESS':
+      case 'PROCESSING':
+        return <Clock className="h-3 w-3" />;
+      case 'PENDING_REVIEW':
+      case 'PENDING':
+      case 'DRAFT':
+      case 'REJECTED':
+      case 'FAILED':
+        return <AlertCircle className="h-3 w-3" />;
+      default:
+        return <Clock className="h-3 w-3" />;
+    }
+  };
+
+  const getPriorityIcon = (priority: string) => {
+    return <Flag className="h-3 w-3" />;
+  };
+
+  const formatStatus = (status: string) => {
+    return status
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
+  const formatPriority = (priority: string) => {
+    return priority.charAt(0).toUpperCase() + priority.slice(1).toLowerCase();
   };
 
   const handleCardClick = () => {
@@ -109,6 +155,18 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                 <span>{formatDate(service.createdAt)}</span>
               </div>
               <div className="flex flex-wrap gap-2">
+                <Badge
+                  className={`text-xs ${getStatusColor(service.status)} flex items-center gap-1`}
+                >
+                  {getStatusIcon(service.status)}
+                  {formatStatus(service.status)}
+                </Badge>
+                <Badge
+                  className={`text-xs ${getPriorityColor(service.priority)} flex items-center gap-1`}
+                >
+                  {getPriorityIcon(service.priority)}
+                  {formatPriority(service.priority)}
+                </Badge>
                 <Badge variant="outline" className="text-xs">
                   {service.serviceType}
                 </Badge>

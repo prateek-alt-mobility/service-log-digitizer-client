@@ -128,6 +128,27 @@ export default function ServiceDetail() {
   const services = apiResponse?.data?.data || [];
   const service = services.find((s) => s._id === serviceId);
 
+  // Helper function to get the active data (prioritizes userEditedData when status is complete)
+  const getActiveServiceData = () => {
+    if (!service) return null;
+
+    // If status is 'COMPLETED' or 'APPROVED' and userEditedData exists, use userEditedData
+    const status = service.status?.toUpperCase();
+    if (service.userEditedData) {
+      console.log(`Using userEditedData for service ${service._id} with status ${service.status}`);
+      return service.userEditedData;
+    }
+
+    // Otherwise, fall back to extractedData
+    console.log(
+      `Using extractedData for service ${service._id} with status ${service.status}, userEditedData available: ${!!service.userEditedData}`,
+    );
+    return service.extractedData;
+  };
+
+  // Store the active data to avoid multiple function calls
+  const activeServiceData = getActiveServiceData();
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString(
       SERVICE_CONFIG.dateFormat.locale,
@@ -148,10 +169,10 @@ export default function ServiceDetail() {
 
   // Prepare chart data for parts cost breakdown
   const getPartsChartData = () => {
-    if (!service?.extractedData?.parts) return [];
-    return service.extractedData.parts
-      .filter((part) => part && part.name && part.totalCost)
-      .map((part, index) => ({
+    if (!activeServiceData?.parts) return [];
+    return activeServiceData.parts
+      .filter((part: any) => part && part.name && part.totalCost)
+      .map((part: any, index: number) => ({
         name: part.name || 'Unknown Part',
         value: part.totalCost || 0,
         color: `hsl(${index * 60}, 70%, 50%)`,
@@ -160,10 +181,10 @@ export default function ServiceDetail() {
 
   // Prepare chart data for services cost breakdown
   const getServicesChartData = () => {
-    if (!service?.extractedData?.services) return [];
-    return service.extractedData.services
-      .filter((service) => service && service.type && service.cost)
-      .map((service, index) => ({
+    if (!activeServiceData?.services) return [];
+    return activeServiceData.services
+      .filter((service: any) => service && service.type && service.cost)
+      .map((service: any, index: number) => ({
         name: service.type || 'Unknown Service',
         value: service.cost || 0,
         color: `hsl(${index * 90 + 180}, 70%, 50%)`,
@@ -172,21 +193,21 @@ export default function ServiceDetail() {
 
   // Prepare chart data for cost breakdown
   const getCostBreakdownData = () => {
-    if (!service?.extractedData?.costs) return [];
+    if (!activeServiceData?.costs) return [];
     return [
       {
         name: 'Parts',
-        value: service.extractedData.costs.partsCost || 0,
+        value: activeServiceData.costs.partsCost || 0,
         color: SERVICE_CONFIG.chartColors.costBreakdown.parts,
       },
       {
         name: 'Labor',
-        value: service.extractedData.costs.laborCost || 0,
+        value: activeServiceData.costs.laborCost || 0,
         color: SERVICE_CONFIG.chartColors.costBreakdown.labor,
       },
       {
         name: 'Tax',
-        value: service.extractedData.costs.taxAmount || 0,
+        value: activeServiceData.costs.taxAmount || 0,
         color: SERVICE_CONFIG.chartColors.costBreakdown.tax,
       },
     ];
@@ -397,7 +418,7 @@ export default function ServiceDetail() {
             </Card>
 
             {/* Vehicle Information */}
-            {service.extractedData?.vehicleInfo && (
+            {activeServiceData?.vehicleInfo && (
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -407,63 +428,63 @@ export default function ServiceDetail() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {service.extractedData.vehicleInfo.vin && (
+                    {activeServiceData.vehicleInfo.vin && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           VIN
                         </label>
                         <p className="text-sm sm:text-base font-medium break-all">
-                          {service.extractedData.vehicleInfo.vin}
+                          {activeServiceData.vehicleInfo.vin}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.vehicleInfo.registrationNumber && (
+                    {activeServiceData.vehicleInfo.registrationNumber && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Registration
                         </label>
                         <p className="text-sm sm:text-base font-medium">
-                          {service.extractedData.vehicleInfo.registrationNumber}
+                          {activeServiceData.vehicleInfo.registrationNumber}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.vehicleInfo.make && (
+                    {activeServiceData.vehicleInfo.make && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Make
                         </label>
                         <p className="text-sm sm:text-base font-medium">
-                          {service.extractedData.vehicleInfo.make}
+                          {activeServiceData.vehicleInfo.make}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.vehicleInfo.model && (
+                    {activeServiceData.vehicleInfo.model && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Model
                         </label>
                         <p className="text-sm sm:text-base font-medium">
-                          {service.extractedData.vehicleInfo.model}
+                          {activeServiceData.vehicleInfo.model}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.vehicleInfo.mileage && (
+                    {activeServiceData.vehicleInfo.mileage && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Mileage
                         </label>
                         <p className="text-sm sm:text-base font-medium">
-                          {service.extractedData.vehicleInfo.mileage.toLocaleString()} km
+                          {activeServiceData.vehicleInfo.mileage.toLocaleString()} km
                         </p>
                       </div>
                     )}
-                    {service.extractedData.vehicleInfo.year && (
+                    {activeServiceData.vehicleInfo.year && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Year
                         </label>
                         <p className="text-sm sm:text-base font-medium">
-                          {service.extractedData.vehicleInfo.year}
+                          {activeServiceData.vehicleInfo.year}
                         </p>
                       </div>
                     )}
@@ -473,12 +494,12 @@ export default function ServiceDetail() {
             )}
 
             {/* Services */}
-            {service.extractedData?.services && service.extractedData.services.length > 0 && (
+            {activeServiceData?.services && activeServiceData.services.length > 0 && (
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Wrench className="h-5 w-5" />
-                    Services ({service.extractedData.services.length})
+                    Services ({activeServiceData.services.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -489,7 +510,7 @@ export default function ServiceDetail() {
                           <TableHead className="text-xs sm:text-sm">Service Type</TableHead>
                           <TableHead className="text-xs sm:text-sm">Description</TableHead>
                           <TableHead className="text-right text-xs sm:text-sm">Cost</TableHead>
-                          {service.extractedData.services.some((s) => s.laborHours) && (
+                          {activeServiceData.services.some((s: any) => s.laborHours) && (
                             <TableHead className="text-right text-xs sm:text-sm">
                               Labor Hours
                             </TableHead>
@@ -497,7 +518,7 @@ export default function ServiceDetail() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {service.extractedData.services.map((serviceItem, index) => (
+                        {activeServiceData.services.map((serviceItem: any, index: number) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium text-xs sm:text-sm">
                               {serviceItem.type || 'Unknown'}
@@ -508,7 +529,7 @@ export default function ServiceDetail() {
                             <TableCell className="text-right font-medium text-xs sm:text-sm">
                               {serviceItem.cost ? formatCurrency(serviceItem.cost) : 'N/A'}
                             </TableCell>
-                            {service.extractedData.services.some((s) => s.laborHours) && (
+                            {activeServiceData.services.some((s: any) => s.laborHours) && (
                               <TableCell className="text-right text-xs sm:text-sm">
                                 {serviceItem.laborHours || '-'}
                               </TableCell>
@@ -523,12 +544,12 @@ export default function ServiceDetail() {
             )}
 
             {/* Parts */}
-            {service.extractedData?.parts && service.extractedData.parts.length > 0 && (
+            {activeServiceData?.parts && activeServiceData.parts.length > 0 && (
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Package className="h-5 w-5" />
-                    Parts ({service.extractedData.parts.length})
+                    Parts ({activeServiceData.parts.length})
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -546,7 +567,7 @@ export default function ServiceDetail() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {service.extractedData.parts.map((part, index) => (
+                        {activeServiceData.parts.map((part: any, index: number) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium text-xs sm:text-sm max-w-[150px] break-words">
                               {part.name || 'Unknown Part'}
@@ -585,53 +606,53 @@ export default function ServiceDetail() {
             </Card>
 
             {/* Extracted Data */}
-            {service.extractedData && (
+            {activeServiceData && (
               <Card>
                 <CardHeader className="pb-3 sm:pb-4">
                   <CardTitle className="text-lg sm:text-xl">Extracted Information</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    {service.extractedData.invoiceNumber && (
+                    {activeServiceData.invoiceNumber && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Invoice Number
                         </label>
                         <p className="text-sm sm:text-base break-all">
-                          {service.extractedData.invoiceNumber}
+                          {activeServiceData.invoiceNumber}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.shopName && (
+                    {activeServiceData.shopName && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Name
                         </label>
-                        <p className="text-sm sm:text-base">{service.extractedData.shopName}</p>
+                        <p className="text-sm sm:text-base">{activeServiceData.shopName}</p>
                       </div>
                     )}
-                    {service.extractedData.shopAddress && (
+                    {activeServiceData.shopAddress && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Address
                         </label>
                         <p className="text-sm sm:text-base break-words">
-                          {service.extractedData.shopAddress}
+                          {activeServiceData.shopAddress}
                         </p>
                       </div>
                     )}
-                    {service.extractedData.shopPhone && (
+                    {activeServiceData.shopPhone && (
                       <div>
                         <label className="text-xs sm:text-sm font-medium text-muted-foreground">
                           Shop Phone
                         </label>
-                        <p className="text-sm sm:text-base">{service.extractedData.shopPhone}</p>
+                        <p className="text-sm sm:text-base">{activeServiceData.shopPhone}</p>
                       </div>
                     )}
-                    {!service.extractedData.invoiceNumber &&
-                      !service.extractedData.shopName &&
-                      !service.extractedData.shopAddress &&
-                      !service.extractedData.shopPhone && (
+                    {!activeServiceData.invoiceNumber &&
+                      !activeServiceData.shopName &&
+                      !activeServiceData.shopAddress &&
+                      !activeServiceData.shopPhone && (
                         <div className="col-span-1 sm:col-span-2">
                           <p className="text-xs sm:text-sm text-muted-foreground">
                             No extracted information available
@@ -662,164 +683,6 @@ export default function ServiceDetail() {
 
           {/* Sidebar */}
           <div className="space-y-4 sm:space-y-6">
-            {/* Cost Breakdown Charts */}
-            {service.extractedData?.costs && (
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <DollarSign className="h-5 w-5" />
-                    Cost Breakdown
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4 sm:space-y-6">
-                    {/* Overall Cost Breakdown */}
-                    <div>
-                      <h4 className="text-sm font-medium mb-3">Cost Distribution</h4>
-                      <div className="h-32 sm:h-48">
-                        <ChartContainer
-                          config={{
-                            parts: { color: SERVICE_CONFIG.chartColors.costBreakdown.parts },
-                            labor: { color: SERVICE_CONFIG.chartColors.costBreakdown.labor },
-                            tax: { color: SERVICE_CONFIG.chartColors.costBreakdown.tax },
-                          }}
-                        >
-                          <PieChart>
-                            <Pie
-                              data={getCostBreakdownData()}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={20}
-                              outerRadius={60}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {getCostBreakdownData().map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                          </PieChart>
-                        </ChartContainer>
-                      </div>
-                      <div className="mt-3 space-y-2">
-                        {getCostBreakdownData().map((item, index) => (
-                          <div key={index} className="flex justify-between text-xs sm:text-sm">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
-                                style={{ backgroundColor: item.color }}
-                              />
-                              <span className="truncate">{item.name}</span>
-                            </div>
-                            <span className="font-medium">{formatCurrency(item.value)}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Total Cost Summary */}
-                    <Separator />
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-xs sm:text-sm text-muted-foreground">Subtotal</span>
-                        <span className="text-xs sm:text-sm font-medium">
-                          {service.extractedData.costs.subtotal
-                            ? formatCurrency(service.extractedData.costs.subtotal)
-                            : 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs sm:text-sm text-muted-foreground">Tax</span>
-                        <span className="text-xs sm:text-sm font-medium">
-                          {service.extractedData.costs.taxAmount
-                            ? formatCurrency(service.extractedData.costs.taxAmount)
-                            : 'N/A'}
-                        </span>
-                      </div>
-                      <Separator />
-                      <div className="flex justify-between text-base sm:text-lg font-bold">
-                        <span>Total</span>
-                        <span>
-                          {service.extractedData.costs.totalCost
-                            ? formatCurrency(service.extractedData.costs.totalCost)
-                            : 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Parts Cost Chart */}
-            {service.extractedData?.parts && service.extractedData.parts.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <Package className="h-5 w-5" />
-                    Parts Cost
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48 sm:h-64">
-                    <ChartContainer
-                      config={{
-                        value: { color: SERVICE_CONFIG.chartColors.partsChart },
-                      }}
-                    >
-                      <BarChart data={getPartsChartData()}>
-                        <XAxis
-                          dataKey="name"
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                          fontSize={10}
-                        />
-                        <YAxis fontSize={10} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.partsChart} />
-                      </BarChart>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Services Cost Chart */}
-            {service.extractedData?.services && service.extractedData.services.length > 0 && (
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <Wrench className="h-5 w-5" />
-                    Services Cost
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-48 sm:h-64">
-                    <ChartContainer
-                      config={{
-                        value: { color: SERVICE_CONFIG.chartColors.servicesChart },
-                      }}
-                    >
-                      <BarChart data={getServicesChartData()}>
-                        <XAxis
-                          dataKey="name"
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                          fontSize={10}
-                        />
-                        <YAxis fontSize={10} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.servicesChart} />
-                      </BarChart>
-                    </ChartContainer>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             {/* Service Information */}
             <Card>
               <CardHeader className="pb-3 sm:pb-4">
@@ -936,6 +799,164 @@ export default function ServiceDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Cost Breakdown Charts */}
+            {activeServiceData?.costs && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <DollarSign className="h-5 w-5" />
+                    Cost Breakdown
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4 sm:space-y-6">
+                    {/* Overall Cost Breakdown */}
+                    <div>
+                      <h4 className="text-sm font-medium mb-3">Cost Distribution</h4>
+                      <div className="h-32 sm:h-48">
+                        <ChartContainer
+                          config={{
+                            parts: { color: SERVICE_CONFIG.chartColors.costBreakdown.parts },
+                            labor: { color: SERVICE_CONFIG.chartColors.costBreakdown.labor },
+                            tax: { color: SERVICE_CONFIG.chartColors.costBreakdown.tax },
+                          }}
+                        >
+                          <PieChart>
+                            <Pie
+                              data={getCostBreakdownData()}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={20}
+                              outerRadius={60}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {getCostBreakdownData().map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                          </PieChart>
+                        </ChartContainer>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {getCostBreakdownData().map((item, index) => (
+                          <div key={index} className="flex justify-between text-xs sm:text-sm">
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 sm:w-3 sm:h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="truncate">{item.name}</span>
+                            </div>
+                            <span className="font-medium">{formatCurrency(item.value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Total Cost Summary */}
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Subtotal</span>
+                        <span className="text-xs sm:text-sm font-medium">
+                          {activeServiceData.costs.subtotal
+                            ? formatCurrency(activeServiceData.costs.subtotal)
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-xs sm:text-sm text-muted-foreground">Tax</span>
+                        <span className="text-xs sm:text-sm font-medium">
+                          {activeServiceData.costs.taxAmount
+                            ? formatCurrency(activeServiceData.costs.taxAmount)
+                            : 'N/A'}
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-base sm:text-lg font-bold">
+                        <span>Total</span>
+                        <span>
+                          {activeServiceData.costs.totalCost
+                            ? formatCurrency(activeServiceData.costs.totalCost)
+                            : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Parts Cost Chart */}
+            {activeServiceData?.parts && activeServiceData.parts.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Package className="h-5 w-5" />
+                    Parts Cost
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48 sm:h-64">
+                    <ChartContainer
+                      config={{
+                        value: { color: SERVICE_CONFIG.chartColors.partsChart },
+                      }}
+                    >
+                      <BarChart data={getPartsChartData()}>
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          fontSize={10}
+                        />
+                        <YAxis fontSize={10} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.partsChart} />
+                      </BarChart>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Services Cost Chart */}
+            {activeServiceData?.services && activeServiceData.services.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3 sm:pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                    <Wrench className="h-5 w-5" />
+                    Services Cost
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-48 sm:h-64">
+                    <ChartContainer
+                      config={{
+                        value: { color: SERVICE_CONFIG.chartColors.servicesChart },
+                      }}
+                    >
+                      <BarChart data={getServicesChartData()}>
+                        <XAxis
+                          dataKey="name"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
+                          fontSize={10}
+                        />
+                        <YAxis fontSize={10} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar dataKey="value" fill={SERVICE_CONFIG.chartColors.servicesChart} />
+                      </BarChart>
+                    </ChartContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
