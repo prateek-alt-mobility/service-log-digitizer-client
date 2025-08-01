@@ -138,7 +138,7 @@ enum SERVICE_API_ENDPOINTS {
 
 // Create a custom base query for the export service with the specific URL
 const exportServiceBaseQuery = fetchBaseQuery({
-  baseUrl: 'https://estonia-hurricane-soa-renewable.trycloudflare.com',
+  baseUrl: 'https://trader-adam-affects-attempt.trycloudflare.com',
   prepareHeaders: (headers) => {
     const token = localStorage.getItem('access_token');
     if (token) {
