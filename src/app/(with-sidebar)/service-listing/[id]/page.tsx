@@ -664,21 +664,7 @@ export default function ServiceDetail() {
               </Card>
             )}
 
-            {/* Processing Information */}
-            {service.invoice?.processingError && (
-              <Card>
-                <CardHeader className="pb-3 sm:pb-4">
-                  <CardTitle className="text-destructive text-lg sm:text-xl">
-                    Processing Error
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xs sm:text-sm text-destructive break-words">
-                    {service.invoice.processingError}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+           
           </div>
 
           {/* Sidebar */}
