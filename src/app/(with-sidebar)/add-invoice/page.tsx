@@ -213,7 +213,7 @@ const AddInvoicePage = () => {
   const [priority, setPriority] = useState<string>('');
   const [description, setDescription] = useState<string>('');
 
-  const [uploadFile] = useUploadFileMutation();
+  const [uploadFile, { isLoading: isUploading }] = useUploadFileMutation();
   const [createService] = useCreateServiceMutation();
   const [isAIParsing, setIsAIParsing] = useState(false);
   const [isParseSuccess, setIsParseSuccess] = useState(false);
@@ -388,8 +388,8 @@ const AddInvoicePage = () => {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full">
-              Upload Invoice
+            <Button type="submit" className="w-full" disabled={isUploading}>
+              {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Upload Invoice'}
             </Button>
           </form>
         </Form>
