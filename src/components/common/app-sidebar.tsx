@@ -31,11 +31,6 @@ const data = [
     url: '/add-invoice',
     icon: Plus,
   },
-  {
-    title: 'File Upload',
-    url: '/file-upload',
-    icon: Upload,
-  },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
