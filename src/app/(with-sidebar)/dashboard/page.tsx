@@ -138,7 +138,7 @@ const chartConfig = {
     color: 'hsl(var(--chart-1))',
   },
   cost: {
-    label: 'Cost ($)',
+    label: 'Cost (₹)',
     color: 'hsl(var(--chart-2))',
   },
   processingTime: {
@@ -327,8 +327,8 @@ export default function DashboardPage() {
           />
           <MetricCard
             title="Total Cost Processed"
-            value={`$${(dashboardMetrics.overview.totalCost / 1000).toFixed(0)}K`}
-            subtitle={`+$${(dashboardMetrics.overview.monthlyCost / 1000).toFixed(0)}K this month`}
+            value={`₹${(dashboardMetrics.overview.totalCost / 1000).toFixed(0)}K`}
+            subtitle={`+₹${(dashboardMetrics.overview.monthlyCost / 1000).toFixed(0)}K this month`}
             icon={DollarSign}
             trend="up"
             trendValue="+8.2%"
@@ -512,7 +512,7 @@ export default function DashboardPage() {
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{item.category}</span>
                         <span className="text-sm text-muted-foreground">
-                          ${item.amount.toLocaleString()} ({item.percentage}%)
+                          ₹{item.amount.toLocaleString()} ({item.percentage}%)
                         </span>
                       </div>
                       <div className="w-full bg-secondary rounded-full h-2">
