@@ -663,8 +663,6 @@ export default function ServiceDetail() {
                 </CardContent>
               </Card>
             )}
-
-           
           </div>
 
           {/* Sidebar */}

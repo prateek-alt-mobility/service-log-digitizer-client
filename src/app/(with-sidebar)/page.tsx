@@ -1,11 +1,14 @@
 'use client';
-import { useGetInvoiceAnalyticsQuery } from './home.api';
-import ServiceListing from './service-listing/page';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const { data, isLoading } = useGetInvoiceAnalyticsQuery();
-  console.log(data);
+  const router = useRouter();
 
-  // Render the ServiceListing component instead of basic home content
-  return <ServiceListing />;
+  useEffect(() => {
+    // Redirect to dashboard on page load
+    router.replace('/dashboard');
+  }, [router]);
+
+  return null;
 }

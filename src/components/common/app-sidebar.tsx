@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { PieChart, Plus, FileText, Upload } from 'lucide-react';
+import { BarChart3, Plus, FileText, Upload } from 'lucide-react';
 
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
@@ -14,12 +14,12 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-// This is sample data.
+// Navigation data for the sidebar
 const data = [
   {
-    title: 'Dashboard',
-    url: '/',
-    icon: PieChart,
+    title: 'Analytics Dashboard',
+    url: '/dashboard',
+    icon: BarChart3,
   },
   {
     title: 'Service Documents',
